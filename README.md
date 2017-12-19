@@ -3,9 +3,10 @@ Planned QGIS import plugin for survex 3d files
 
 ## Summary
 
-The idea is that a survex `.3d` file should be easily readable into a
-Geographic Information System (GIS) platform, such as
-[QGIS](http://www.qgis.org/ "QGIS website"), then it can be integrated
+The idea that a survex `.3d` file should be easily readable into a
+Geographic Information System (GIS) platform such as
+[QGIS](http://www.qgis.org/ "QGIS website") is practically a no-brainer,
+as it can then be integrated
 with other geographical data such as maps, satellite imagery, digital
 elevation models, and the like.  Now this is much closer to being
 achievable than one might think.  Here's the contents of a
@@ -115,7 +116,7 @@ Map](http://www.natureonthemap.naturalengland.org.uk/MagicMap.aspx
 set to use the WGS84 datum, Magic Map reports latitude and longitude
 in the OSGB36 datum, which as mentioned is offset from WGS84 by a
 datum shift of up to 50-100m.  Beware copying and pasting these OSGB36
-latitudes and longitudes into Google Earth, for example!
+latitudes and longitudes into Google Earth!
 
 ## Georeferencing cave survey data
 
