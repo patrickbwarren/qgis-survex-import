@@ -9,15 +9,17 @@
 ; In terms of the survey data, Dowbergill Passage splits naturally at 800 yds
 ; chamber, where the WRPC re-survey ended in 2004.
  
-; Magnetic declinations in individual files have been calculated
+; Magnetic declinations in individual files were originally calculated
 ; using the International Geomagnetic Reference Field (IGRF) model, with
 ; the online NOAA magnetic declination calculator, for the location
 ; (WGS84) 54.14929 N, 2.04008 W (Dowbergill Bridge, just above Kettlewell)
 ; OSGB36 Grid ref: SD 97480 72608  Grid Ref = SD974726
 ; Location : (OSGB36) Easting = 397480 Northing = 472605
 ; altitude 225m ODN estimated from spot height on road (Magic Map)
-
-; update -- this is now done automatically using the auto declination below
+; All these declinations are now commented out, as this method is depracated
+; in favour of using the *declination auto command in survex.  However
+; it has been verified that both methods generate the exact same
+; reduced survey data.
 
 ; Dates 1982 (Dow Cave) -- 2015 (Dowbergill upstream of 800 yds chamber)
 
@@ -32,13 +34,18 @@
 ; Red Rose Cave and Pothole Club (RRCPC)
 ; White Rose Pothole Club (WRPC)
 
-; Input CRS *fixes are georeferenced to the SW corner of the Ordnance Survey
-; SD grid square, ie SD 000 000.
+; Input CRS *fixes are georeferenced to the SW corner of the
+; Ordnance Survey SD grid square, ie SD 000 000.
 
 ; Output CRS is OSGB 1936 / British National Grid (EPSG:27700)
 
 *cs OSGB:SD
 *cs out EPSG:27700
+
+;*cs out EPSG:32630 ; WGS84 UTM zone 30N (includes zone 30U)
+
+; Mag dec calculated for SD 97480 72608
+;(Dowbergill Bridge, just above Kettlewell)
 
 *declination auto 97480 72608 225
 
