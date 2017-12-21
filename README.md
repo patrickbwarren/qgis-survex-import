@@ -292,13 +292,86 @@ This correctly applies the magnetic declination using the
 [International Geomagnetic Reference Field (IGRF)](https://en.wikipedia.org/wiki/International_Geomagnetic_Reference_Field "wikipedia") model, 
 calculated at the specified location in the input
 CRS, and applied to _all_ the included survey files,
-in this case taking into account that
-the range of dates spans some 30 years.
+in this case taking into account 
+the range of dates which spans some 30 years.
 
 ## Quick-and-dirty two dimensional (flat) GIS import
 
-_Work in progress !_
+The quickest way to get survey data into a GIS platform (QGIS) once
+the dataset has been georeferenced as just described is via the DXF
+file format, using the survex `cad3d` tool, or exporting from `aven`.
+One can load this DXF file into a GIS platform like QGIS.  At present
+this diect route does not seem to preserve the elevation (z) data, but
+nevertheless is useful as a quick and dirty way to throw for example a
+centreline onto a map.
+
+## Three dimensional GIS import
+
+From the DXF file, the centreline can be extracted by running (at the
+command line)
+```
+ogr2ogr -f "ESRI Shapefile" DowProv_centreline.shp DowProv.dxf -where "Layer='CentreLine'" -a_srs EPSG:27700
+```
+We take the opportunity here to add a CRS to match that
+used in the georeferenced survey data.  The resulting shapefile can
+then be imported in QGIS, and this route _does_ preserve elevation (z)
+data.  Similarly the stations with labels (and elevations)
+can be extracted by running
+```
+ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf -where "Layer='Labels'" -a_srs EPSG:27700
+```
+
+## Automating the process
+
+_Work in progress_
 
 ## Notes on georeferencing images, maps, and old surveys
 
-_Also work in progress !_
+Georeferencing here refers to assigning a co-ordinate system to an
+image or map, or a scanned hard copy of a survey.  The actual steps
+require identifying so-called Ground Control Points (GCPs), which are
+identifiable features on the map for which actual co-ordinates are
+known.  One way to do this is to use the georeferencer plugin in QGIS.
+Then, a useful way to extract co-ordinates for GCPs can be to install
+the OpenLayers plugin which allows one to pull down data from Open
+Street Map, Google Maps, and so on.  In particular, one can pull down
+satellite imagery into QGIS and use the option to set the GCP
+co-ordinates from the QGIS main window.  Georeferencing then becomes
+quick and easy, for example finding 2-3 wall corners or other features
+on the image, and set their co-ordinates by simply clicking on the
+same features in the main window (make sure the CRS in the main window
+is set to what you want though).
+
+Georeferencing surveys may be easier if there is more than one
+entrance and the positions are known, or there is already a surface
+grid.  If there is only one entrance then tracing a centerline in
+Inkscape and using the survex output tool as described
+[here](https://github.com/patrickbwarren/inkscape-survex-export "GitHub")
+may help.
+
+### Copying
+
+These notes are licensed under a
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/ "CC BY-NC-SA 4.0").
+
+Code in this repository is licensed under GLPv3:
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+<http://www.gnu.org/licenses/>.
+
+### Copyright
+
+Copyright &copy; (2017) Patrick B Warren.
+
+
