@@ -4,15 +4,15 @@ Planned QGIS import plugin for survex 3d files
 
 ## Summary
 
-The idea that a [survex](https://survex.com/ "survex website")
-`.3d` file should be easily readable into a
+The idea that reduced cave survey data
+should be easily readable into a
 Geographic Information System (GIS) platform such as
 [QGIS](http://www.qgis.org/ "QGIS website") is practically a no-brainer,
 as it can then be integrated
 with other geographical data such as maps, satellite imagery, digital
 elevation models, and the like.  Now this is much closer to being
 achievable than one might think.  Here's the contents of a
-typical (modern) `.3d` file as exposed by running `dump3d`:
+typical [survex](https://survex.com/ "survex website") `.3d` file as exposed by running `dump3d`:
 
 * survey metadata: title, date, and co-ordinate reference system;
 * strings of survey legs with metadata: names,
@@ -50,25 +50,24 @@ so on Windows you might have to use something like
 to look at them.  The processed data is `DowProv.3d`, generated using
 survex 1.2.32.
 
-## Co-ordinate Reference Systems
+## Spatial Reference Systems
 
 In order for this to work smoothly, we first have to be on top of our
-co-ordinate reference system (CRS), or
 [spatial reference system (SRS)](https://en.wikipedia.org/wiki/Spatial_reference_system "wikipedia").
 In GIS parlance, this is basically a co-ordinate-based scheme for
 locating geographical features.  The following notes hopefully contain
 enough of the truth to be useful.  Something closer to the truth can be found
 [here](http://www.bnhs.co.uk/focuson/grabagridref/html/OSGB.pdf "OSGB.pdf").
 
-A CRS usually comprises:
+A SRS usually comprises:
 
 * a [geodetic datum](https://en.wikipedia.org/wiki/Geodetic_datum "wikipedia")
 or reference ellipsoid which specifies the overall shape
 of the earth's surface (eg
-[WGS84](https://en.wikipedia.org/wiki/World_Geodetic_System "wikipedia")
-used in GPS, or the Airy ellipsoid
+[WGS84](https://en.wikipedia.org/wiki/World_Geodetic_System "wikipedia") datum
+used in GPS, or the 
 [OSGB36](https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid "wikipedia")
-used by the Ordnance Survey in the UK);
+datum used by the Ordnance Survey (OS) in the UK);
 
 * a map projection which is nearly always a
 [Transverse Mercator](https://en.wikipedia.org/wiki/Transverse_Mercator_projection "wikipedia")
@@ -104,15 +103,15 @@ UTM co-ordinates, or metric British National Grid co-ordinates.
 To further add to the confusion, latitude and longitude can be
 reported in decimal degrees; or degrees, minutes, and seconds (or
 even degrees and decimal minutes).  For example the entrance
-to Dow Cave is at OS NGR SD&nbsp;98378&nbsp;74300 (see below),
-which translates (WGS84 datum) to 
+to Dow Cave is at NGR SD&nbsp;98378&nbsp;74300 (see below),
+which translates to
 (WGS84) 54&deg;&nbsp;9'&nbsp;52.2"&nbsp;N 2&deg;&nbsp;1'&nbsp;34.8"&nbsp;W
 in deg / min / sec (where one decimal place in the seconds corresponds to approximately 3m on the ground),
 or (WGS84) 54.16450&deg;&nbsp;N 2.02634&deg;&nbsp;W in decimal degrees
 (where five decimal places corresponds approximately to
 1m on the ground).
 Online converters between British National Grid references and
-WGS84 latitudes and logitudues can be found on the internet by searching
+WGS84 latitudes and logitudes can be found on the internet by searching
 for 'OSGB36 to WGS84 converter'.  To check things,
 the WGS84 latitude and longitude in
 decimal degrees can be copied and pasted into Google maps for example, or for
@@ -120,7 +119,7 @@ that matter directly into the Google search engine.
 
 In the UK, Ordnance Survey (OS)
 [British National Grid](https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid "wikipedia")
-co-ordinates provide a metric CRS which is convenient for cave survey data.
+co-ordinates provide a metric SRS which is convenient for cave survey data.
 Typically one fixes cave entrances using the numeric part of the national
 grid reference (NGR).
 NGRs can be specified in two ways.  The most common way is to use the OS grid
@@ -156,7 +155,7 @@ datum shift of up to 50-100m.  Beware copying and pasting these OSGB36
 latitudes and longitudes into Google Maps!
 
 Elsewhere in the world, or for that matter in the UK as well, the UTM
-system offers a convenient metric CRS for embedding cave survey data.
+system offers a convenient metric SRS for embedding cave survey data.
 Typically one fixes the entrance coordinates as the numeric part of
 the UTM position, making a note of the UTM grid zone.  Online
 converters from WGS84 latitude and longitude to UTM or back are easily
@@ -179,24 +178,24 @@ should introduce negligible errors, at least in comparison to the
 errors that typically creep into cave survey projects.
 
 As long as this local cave co-ordinate system can be tied into one of
-the known geodetic CRS schemes (ie
+the known geodetic SRS schemes (ie
 [_georeferenced_](https://en.wikipedia.org/wiki/Georeferencing "wikipedia")),
 then any feature in the cave will have a known position in GIS terms,
 and can thus be tied into any other georeferenced data such as maps,
 satellite imagery, digital elevation models, etc.  Given that most
 cave surveying is done in metres, it is obviously convenient to tie
-into a CRS which uses metric co-ordinates, such as UTM or British
+into a SRS which uses metric co-ordinates, such as UTM or British
 National Grid.  Note that once you've tied the dataset into a
-recognised CRS, any GIS platform worth its salt will be able to
-re-project into a different CRS, and will be able to display and
-combine information from different sources irrespective of the CRS.
+recognised SRS, any GIS platform worth its salt will be able to
+re-project into a different SRS, and will be able to display and
+combine information from different sources irrespective of the SRS.
 
 The easiest way to georeference cave survey data, with a modern
 survex distribution, is to `*fix` cave entrances in an appropriate
-CRS and make judicious use of the `*cs` commands.  One would typically
-use a plain `*cs` command to specify the input CRS that the entrance
+SRS and make judicious use of the `*cs` commands (for co-ordinate system).
+use a plain `*cs` command to specify the input SRS that the entrance
 co-ordinates are given in, and a `*cs out`
-command to specify what the output CRS should be.  In
+command to specify what the output SRS should be.  In
 the UK for instance one can use this to convert between the OS grid
 letter system and the all-numeric scheme. 
 For example `DowCave.svx` for the Dow-Providence system contains
@@ -226,13 +225,13 @@ location as a 10-fig NGR `SD 98378 74300`, without the `SD` part.  The
 easting and northing here (and elevation
 [OSDN](https://en.wikipedia.org/wiki/Ordnance_datum "wikipedia"))
 were obtained by field work.
-Then `DowProv.svx` specifies input CRS is the OS GB SD square, and
+Then `DowProv.svx` specifies input SRS is the OS GB SD square, and
 asks that the reduced data should be exported using the all-numeric British
 National Grid scheme, here codified with a
 [European Petroleum Survey Group (EPSG)](http://spatialreference.org/ "spatial reference website")
 code.  Using EPSG numbers avoids
 potential misunderstanding when importing into a GIS platform, for
-example in QGIS one can find the exact exported CRS
+example in QGIS one can find the exact exported SRS
 easily enough by searching on
 the EPSG number.
 
@@ -244,7 +243,7 @@ the processed entrance co-ordinates are now indeed
 Whilst this may seem like a crazily over-the-top
 way to add a '3' and '4' to the entrance co-ordinates, it is actually very simple to implement:
 one only needs to add two lines (the `*cs` and `*cs out` commands) to the survex file.
-The benefit is that it is robust, clean, and unambiguous.  Moreover, the output CRS
+The benefit is that it is robust, clean, and unambiguous.  Moreover, the output SRS
 is included as metadata in the `.3d` file; thus with `dump3d` one sees
 ```
 CS +init=epsg:27700 +no_defs
@@ -256,14 +255,14 @@ pushed to a GIS application).
 As a slightly less trivial example, one can ask for the reduced survey
 data to be re-projected as UTM coordinates.  This can be done almost
 totally trivially by replacing the previous `*cs out` command with
-`*cs out EPSG:32630` which specifies the output CRS is (WGS84) UTM
+`*cs out EPSG:32630` which specifies the output SRS is (WGS84) UTM
 zone 30N (this includes zone 30U).  If we now
 reduce the data with `cavern` and check with `3dtopos` we find the Dow Cave
 entrance has magically moved to
 ```
 (563570.22, 6002262.20,   384.57 ) dowprov.dowcave.dow1.1
 ```
-and the exported CRS from `dump3d` is
+and the exported SRS from `dump3d` is
 ```
 CS +init=epsg:32630 +no_defs
 ```
@@ -272,12 +271,28 @@ is the same as obtained by converting the original NGR first
 to WGS84 latitude and longitude, then to UTM, using the online converters.  Note
 that in re-projecting to UTM, we also get a vertical datum shift.
 
-I've gone into this example in some detail as the
+For another example, the CUCC Austria data set which comes as sample
+data with the survex distribution can be georeferenced 
+by adding the following magic to the top of the `all.svx` file: 
+```
+*cs custom "+proj=tmerc +lat_0=0 +lon_0=13d20 +k=1 +x_0=0 +y_0=-5200000 +ellps=bessel +towgs84=577.326,90.129,463.919,5.137,1.474,5.297,2.4232 +units=m +no_defs"
+*cs out EPSG:31255
+```
+The first line specifies the custom SRS in which the co-ordinates of
+the surface fixed points in the Austria data set are specified.  The
+second line determines the output SRS.  This doesn't really matter to
+much as long as the SRS can be recognised by the GIS platform: this
+example uses the MGI / Austria Gauss-Kruger (GK) Central SRS
+(EPSG:31255), where the _only_ difference compared to custom SRS is in
+the y_0 false origin.  Another sensible output SRS would be `EPSG:32633`
+which is (WGS84) UTM zone 33N.
+
+I've gone into these examples in some detail as the
 survex documentation on the `*cs` command is rather spartan.
 
 As an aside, providing the survex data files include correctly
 formatted `*date` commands (as the Dow-Providence dataset does), 
-the `*cs` commands make survex aware of the geodetic CRS and
+the `*cs` commands make survex aware of the geodetic SRS and
 magnetic declination corrections can be automatically added.  This is
 another reason one might want to 'do things properly' with `*cs`
 commands.  The `DowProv.svx` master file thus also contains the lines
@@ -291,7 +306,7 @@ commands.  The `DowProv.svx` master file thus also contains the lines
 This correctly applies the magnetic declination using the
 [International Geomagnetic Reference Field (IGRF)](https://en.wikipedia.org/wiki/International_Geomagnetic_Reference_Field "wikipedia") model, 
 calculated at the specified location in the input
-CRS, and applied to _all_ the included survey files,
+SRS, and applied to _all_ the included survey files,
 in this case taking into account 
 the range of dates which spans some 30 years.
 
@@ -312,7 +327,7 @@ command line)
 ```
 ogr2ogr -f "ESRI Shapefile" DowProv_centreline.shp DowProv.dxf -where "Layer='CentreLine'" -a_srs EPSG:27700
 ```
-We take the opportunity here to add a CRS to match that
+We take the opportunity here to add a SRS to match that
 used in the georeferenced survey data.  The resulting shapefile can
 then be imported in QGIS, and this route _does_ preserve elevation (z)
 data.  Similarly the stations with labels (and elevations)
@@ -339,7 +354,7 @@ satellite imagery into QGIS and use the option to set the GCP
 co-ordinates from the QGIS main window.  Georeferencing then becomes
 quick and easy, for example finding 2-3 wall corners or other features
 on the image, and set their co-ordinates by simply clicking on the
-same features in the main window (make sure the CRS in the main window
+same features in the main window (make sure the SRS in the main window
 is set to what you want though).
 
 Georeferencing surveys may be easier if there is more than one
