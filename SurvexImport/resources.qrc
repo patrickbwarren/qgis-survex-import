@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/SurvexImport" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
