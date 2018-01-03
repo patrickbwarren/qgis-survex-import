@@ -1,11 +1,11 @@
 #/***************************************************************************
 # SurvexImport
 #
-# Import survex .3d files
+# Import features from survex .3d files
 #							 -------------------
-#		begin				: 2017-12-28
+#		begin				: 2018-01-03
 #		git sha				: $Format:%H$
-#		copyright			: (C) 2017 by Patrick B Warren
+#		copyright			: (C) 2018 by Patrick B Warren
 #		email				: patrickbwarren@gmail.com
 # ***************************************************************************/
 #

@@ -1,7 +1,7 @@
 Plugin Builder Results
 
 Your plugin SurvexImport was created in:
-    /home/patrick/GeoData/plugins/SurvexImport
+    /home/patrick/.qgis2/python/plugins/SurvexImport
 
 Your QGIS plugin directory is located at:
     /home/patrick/.qgis2/python/plugins

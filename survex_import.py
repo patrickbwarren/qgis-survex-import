@@ -3,11 +3,11 @@
 /***************************************************************************
  SurvexImport
                                  A QGIS plugin
- Import survex .3d files
+ Import features from survex .3d files
                               -------------------
-        begin                : 2017-12-28
+        begin                : 2018-01-03
         git sha              : $Format:%H$
-        copyright            : (C) 2017 by Patrick B Warren
+        copyright            : (C) 2018 by Patrick B Warren
         email                : patrickbwarren@gmail.com
  ***************************************************************************/
 
@@ -27,8 +27,6 @@ import resources
 # Import the code for the dialog
 from survex_import_dialog import SurvexImportDialog
 import os.path
-
-# from qgis.core import QgsMessageLog
 
 from qgis.core import *
 from PyQt4.QtCore import QVariant
@@ -88,17 +86,15 @@ def add_station_fields(layer):
     pr.addAttributes(attrs)
     layer.updateFields() 
 
-def add_station(layer, name, flags):
+def add_station(layer, xyz, name, flags):
     if layer is None: return
     attrs = [1 if flag in flags else 0 for flag in station_flags ]
     attrs.insert(0, name)
-    xyz = [float(v) for v in fields[1:4]]
     pr = layer.dataProvider()
     feat = QgsFeature()
     feat.setGeometry(QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, *xyz)))
     feat.setAttributes(attrs)
     pr.addFeatures([feat])
-
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
@@ -129,9 +125,10 @@ class SurvexImport:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
+
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Survex Import')
+        self.menu = self.tr(u'&Import .3d file')
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'SurvexImport')
         self.toolbar.setObjectName(u'SurvexImport')
@@ -140,7 +137,6 @@ class SurvexImport:
         
         self.dlg.selectedFile.clear()
         self.dlg.fileSelector.clicked.connect(self.select_3d_file)
-
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -226,7 +222,7 @@ class SurvexImport:
             self.toolbar.addAction(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(
+            self.iface.addPluginToVectorMenu(
                 self.menu,
                 action)
 
@@ -240,7 +236,7 @@ class SurvexImport:
         icon_path = ':/plugins/SurvexImport/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u'Import .3d files'),
+            text=self.tr(u'Import features from .3d files'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -248,8 +244,8 @@ class SurvexImport:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&Survex Import'),
+            self.iface.removePluginVectorMenu(
+                self.tr(u'&Import .3d file'),
                 action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
@@ -267,8 +263,8 @@ class SurvexImport:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
+
+            # This is where all the work is done
 
             survex3dfile = self.dlg.selectedFile.text()
 
@@ -347,6 +343,7 @@ class SurvexImport:
                             xyz_start = xyz_end
 
                         if include_stations and fields[0] == 'NODE':
+                            xyz = [float(v) for v in fields[1:4]]
                             name = fields[4].strip('[]')
                             flags = ' '.join(fields[5:])
                             if not station_layer:
@@ -354,7 +351,7 @@ class SurvexImport:
                                 add_station_fields(station_layer)
                             while (True):
                                 if exclude_surface_stations and 'SURFACE' in flags: break
-                                add_station(station_layer, name, flags)
+                                add_station(station_layer, xyz, name, flags)
                                 break
                 
 
@@ -378,3 +375,4 @@ class SurvexImport:
 
                 raise
 
+            
