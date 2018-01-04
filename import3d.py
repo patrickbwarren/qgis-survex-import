@@ -1,4 +1,31 @@
-survex3dfile = "/home/patrick/GeoData/Matienzo/svega.3d"
+#!/usr/bin/env python
+"""
+import3d.py
+Python script for importing reduced survey data (.3d file) into QGIS.
+It can be added as a user script to the Processing Toolbox. 
+
+Copyright (C) 2017 Patrick B Warren
+
+Email: patrickbwarren@gmail.com
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see
+<http://www.gnu.org/licenses/>.
+"""
+
+# change the following as desired
+
+survex3dfile = "/home/patrick/GitHub/qgis-survex-import/DowProv/DowProv.3d"
 
 include_legs = True
 include_stations = True

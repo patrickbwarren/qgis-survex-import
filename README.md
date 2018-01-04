@@ -1,6 +1,7 @@
 # qgis-survex-import
 
-Planned QGIS import plugin for survex 3d files
+QGIS import plugin for survex `.3d` files.
+To get going straight away, skip to the [install instructions](#qgis-plugin).
 
 ## Summary
 
@@ -21,8 +22,11 @@ typical [survex](https://survex.com/ "survex website") `.3d` file as exposed by 
   fixed, surface) and passage cross-sections (LRUD data).
 
 Now compare this to a typical
-[ESRI shapefile](https://en.wikipedia.org/wiki/Shapefile "wikipedia")
-which is well known container for GIS vector data.  It specifies:
+[ESRI shapefile](https://en.wikipedia.org/wiki/Shapefile "wikipedia"),
+or the
+[GeoPackage](https://en.wikipedia.org/wiki/GeoPackage "wikipedia") data format
+from the [Open Geospatial Consortium](https://en.wikipedia.org/wiki/Open_Geospatial_Consortium "wikipedia"),
+which are well known containers for GIS vector data.  These formats specify:
 
 * geometries comprising points, lines, polylines (line strings), and polygons,
   with or without elevation (z) data;
@@ -31,35 +35,21 @@ which is well known container for GIS vector data.  It specifies:
 * a co-ordinate reference system, and possible other metadata.
 
 Now at this point you are supposed to slap yourself on the head and
-ask why on earth we haven't been using ESRI shapefiles for storing
-reduced survey data all along!  Both are binary formats, and shapefiles
-are certainly flexible enough to contain all the information normally
-included in a `.3d` file.
-
-The sample cave data used in this repository is for the
-[Dow Cave - Providence Pot system](http://www.mudinmyhair.co.uk/ "Mud in My Hair")
-(Great Whernside, Wharfedale), and the complete
-set of survex data
-files can be found in the `DowProv` directory.
-This is essentially a snapshot of the data held in the
-[Cave Registry Data Archive](http://cave-registry.org.uk/ "Cave Registry").
-Note that these `.svx` files have
-[unix-style line endings](https://en.wikipedia.org/wiki/Newline "wikipedia")
-so on Windows you might have to use something like
-[Notepad++](https://notepad-plus-plus.org/ "Notepad++")
-to look at them.  The processed data is `DowProv.3d`, generated using
-survex 1.2.32.
+ask why on earth we haven't been using GIS shapefiles
+for storing reduced survey data all along!  The format is certainly
+flexible enough to contain all the information normally included in a
+`.3d` file.
 
 ## Spatial Reference Systems
 
 In order for this to work smoothly, we first have to be on top of our
-[spatial reference system (SRS)](https://en.wikipedia.org/wiki/Spatial_reference_system "wikipedia").
-In GIS parlance, this is basically a co-ordinate-based scheme for
-locating geographical features.  The following notes hopefully contain
-enough of the truth to be useful.  Something closer to the truth can be found
+[spatial reference system (SRS)](https://en.wikipedia.org/wiki/Spatial_reference_system "wikipedia")
+in general GIS parlance, or co-ordinate reference system (CRS) in QGIS
+language.  The following notes hopefully contain enough of the truth
+to be useful.  Something closer to the truth can be found
 [here](http://www.bnhs.co.uk/focuson/grabagridref/html/OSGB.pdf "OSGB.pdf").
 
-A SRS usually comprises:
+An SRS usually comprises:
 
 * a [geodetic datum](https://en.wikipedia.org/wiki/Geodetic_datum "wikipedia")
 or reference ellipsoid which specifies the overall shape
@@ -79,7 +69,7 @@ here);
 
 * a co-ordinate system defined on top of the map projection,
   typically specifying a 'false origin' so that co-ordinates are always
-  positive.
+  positive. 
 
 Given the geodetic datum one can always work with latitudes and
 longitudes, but these aren't terribly convenient for cave survey data
@@ -91,7 +81,7 @@ example is the
 that nowadays only shows up in
 [Magic Map](http://www.natureonthemap.naturalengland.org.uk/MagicMap.aspx "Magic Map").
 Modern usage nearly always corresponds to the WGS84 datum, which is
-pretty much universally used on the web so far as I know.  It's also used in
+pretty much universally used nowadays.  For example it's used in
 [Google Earth](https://en.wikipedia.org/wiki/Google_Earth "wikipedia")
 and in fact Google's
 [Keyhole Markup Language (KML)](https://developers.google.com/kml/ "Google KML")
@@ -122,15 +112,15 @@ In the UK, Ordnance Survey (OS)
 co-ordinates provide a metric SRS which is convenient for cave survey data.
 Typically one fixes cave entrances using the numeric part of the national
 grid reference (NGR).
-NGRs can be specified in two ways.  The most common way is to use the OS grid
+NGRs can be specified in two ways.  The most convenient way is to use the OS grid
 letter system in which a pair of letters specifies a 100km &times;
 100km square.  Then within that a 10-figure national grid reference
 (NGR) specifies a location to within a square metre.  This system (two
 letters plus 10 figures) is what is usually encountered when using a GPS
-device set to the British National Grid.  Also many datasets in the
+device set to the British National Grid.  Many datasets in the
 Cave Registry have entrance fixes specified as 10-fig NGRs, without the grid letters which are assumed known.
 
-Alternatively, and more commonly in GIS, in the UK one can use an
+Alternatively, and more commonly in GIS, one can use an
 all-numeric 12-figure NGR in which the leading figures signal the 100
 km &times; 100 km square numerically.
 For example as in the all-numeric scheme the entrance to Dow Cave is at NGR
@@ -156,7 +146,7 @@ latitudes and longitudes into Google Maps!
 
 Elsewhere in the world, or for that matter in the UK as well, the UTM
 system offers a convenient metric SRS for embedding cave survey data.
-Typically one fixes the entrance coordinates as the numeric part of
+Typically one fixes the entrance co-ordinates as the numeric part of
 the UTM position, making a note of the UTM grid zone.  Online
 converters from WGS84 latitude and longitude to UTM or back are easily
 found.  For example, the Dow Cave entrance in the UTM scheme is UTM
@@ -184,21 +174,36 @@ then any feature in the cave will have a known position in GIS terms,
 and can thus be tied into any other georeferenced data such as maps,
 satellite imagery, digital elevation models, etc.  Given that most
 cave surveying is done in metres, it is obviously convenient to tie
-into a SRS which uses metric co-ordinates, such as UTM or British
+into an SRS which uses metric co-ordinates, such as UTM or British
 National Grid.  Note that once you've tied the dataset into a
 recognised SRS, any GIS platform worth its salt will be able to
 re-project into a different SRS, and will be able to display and
 combine information from different sources irrespective of the SRS.
 
 The easiest way to georeference cave survey data, with a modern
-survex distribution, is to `*fix` cave entrances in an appropriate
-SRS and make judicious use of the `*cs` commands (for co-ordinate system).
+survex distribution, is to `*fix` cave entrances with appropriate
+co-ordinates and make judicious use of the `*cs` commands (for co-ordinate system):
 use a plain `*cs` command to specify the input SRS that the entrance
 co-ordinates are given in, and a `*cs out`
 command to specify what the output SRS should be.  In
 the UK for instance one can use this to convert between the OS grid
-letter system and the all-numeric scheme. 
-For example `DowCave.svx` for the Dow-Providence system contains
+letter system and the all-numeric scheme.
+
+The cave survey data used in the examples below is included in the
+repository under the `DowProv` directory.  It is for the
+[Dow Cave - Providence Pot system](http://www.mudinmyhair.co.uk/ "Mud in My Hair")
+(Great Whernside, Wharfedale, UK), and is
+essentially a snapshot of the data held in the
+[Cave Registry Data Archive](http://cave-registry.org.uk/ "Cave Registry").
+Note that the `.svx` files have
+[unix-style line endings](https://en.wikipedia.org/wiki/Newline "wikipedia")
+so on Windows you might have to use something like
+[Notepad++](https://notepad-plus-plus.org/ "Notepad++")
+to look at them.  The processed data is `DowProv.3d`, generated using
+survex 1.2.32.
+
+Back to georeferencing, the cave-specific
+file `DowCave.svx` (for example) contains
 ```
 *begin DowCave
 *export entrance
@@ -217,15 +222,15 @@ and the master file `DowProv.svx` contains
 *include DowCave
 ...
 ```
-(Obviously, this is only one of many possible ways
-to add the metadata into the survex files.)
+(obviously this is only one of many possible ways
+to add the metadata into the survex files).
 
-Thus `DowCave.svx` contains a `*fix` which specifies the entrance
+Thus the file `DowCave.svx` contains a `*fix` which specifies the entrance
 location as a 10-fig NGR `SD 98378 74300`, without the `SD` part.  The
 easting and northing here (and elevation
 [OSDN](https://en.wikipedia.org/wiki/Ordnance_datum "wikipedia"))
 were obtained by field work.
-Then `DowProv.svx` specifies input SRS is the OS GB SD square, and
+Then the file `DowProv.svx` specifies input SRS is the OS GB SD square, and
 asks that the reduced data should be exported using the all-numeric British
 National Grid scheme, here codified with a
 [European Petroleum Survey Group (EPSG)](http://spatialreference.org/ "spatial reference website")
@@ -253,7 +258,7 @@ string which species the map projection, and can be directly
 pushed to a GIS application).
 
 As a slightly less trivial example, one can ask for the reduced survey
-data to be re-projected as UTM coordinates.  This can be done almost
+data to be re-projected as UTM co-ordinates.  This can be done almost
 totally trivially by replacing the previous `*cs out` command with
 `*cs out EPSG:32630` which specifies the output SRS is (WGS84) UTM
 zone 30N (this includes zone 30U).  If we now
@@ -273,7 +278,7 @@ that in re-projecting to UTM, we also get a vertical datum shift.
 
 For another example, the CUCC Austria data set which comes as sample
 data with the survex distribution can be georeferenced 
-by adding the following magic to the top of the `all.svx` file: 
+by adding the following to the top of the `all.svx` file: 
 ```
 *cs custom "+proj=tmerc +lat_0=0 +lon_0=13d20 +k=1 +x_0=0 +y_0=-5200000 +ellps=bessel +towgs84=577.326,90.129,463.919,5.137,1.474,5.297,2.4232 +units=m +no_defs"
 *cs out EPSG:31255
@@ -290,7 +295,7 @@ which is (WGS84) UTM zone 33N.
 I've gone into these examples in some detail as the
 survex documentation on the `*cs` command is rather spartan.
 
-As an aside, providing the survex data files include correctly
+As a further benefit, providing the survex data files include correctly
 formatted `*date` commands (as the Dow-Providence dataset does), 
 the `*cs` commands make survex aware of the geodetic SRS and
 magnetic declination corrections can be automatically added.  This is
@@ -310,35 +315,113 @@ SRS, and applied to _all_ the included survey files,
 in this case taking into account 
 the range of dates which spans some 30 years.
 
-## Quick-and-dirty two dimensional (flat) GIS import
+## Importing from .3d files without plugins
+
+### Quick-and-dirty two dimensional (flat) import
 
 The quickest way to get survey data into a GIS platform (QGIS) once
 the dataset has been georeferenced as just described is via the DXF
 file format, using the survex `cad3d` tool, or exporting from `aven`.
 One can load this DXF file into a GIS platform like QGIS.  At present
-this diect route does not seem to preserve the elevation (z) data, but
-nevertheless is useful as a quick and dirty way to throw for example a
-centreline onto a map.
+this direct route does not import z-dimension (elevation) data, but
+nevertheless could be useful as a quick and dirty way to throw for
+example a centreline onto a map.
 
-## Three dimensional GIS import
+### Three dimensional GIS import
 
 From the DXF file, the centreline can be extracted by running (at the
 command line)
 ```
 ogr2ogr -f "ESRI Shapefile" DowProv_centreline.shp DowProv.dxf -where "Layer='CentreLine'" -a_srs EPSG:27700
 ```
-We take the opportunity here to add a SRS to match that
-used in the georeferenced survey data.  The resulting shapefile can
-then be imported in QGIS, and this route _does_ preserve elevation (z)
-data.  Similarly the stations with labels (and elevations)
+
+We take the opportunity here to add an SRS to match that used in the
+georeferenced survey data.  The resulting shapefile can then be
+imported in QGIS, and this route _does_ preserve z-dimension
+(elevation) data.
+Thus, for example, one can run the
+[Qgis2threejs](https://plugins.qgis.org/plugins/Qgis2threejs/ "Qgis2threejs plugin")
+plugin with a suitable digital elevation model (DEM) raster to
+generate a three dimensional view with the cave features
+underneath the landscape.
+
+Similarly the stations with labels (and elevations)
 can be extracted by running
 ```
 ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf -where "Layer='Labels'" -a_srs EPSG:27700
 ```
 
-## Automating the process
+This import route requires command-line access to the
+[GDAL utilities](http://www.gdal.org/ogr_utilities.html "gdal.org").
 
-_Work in progress_
+## Importing from .3d files using plugins
+
+### QGIS plugin
+
+This plugin provides a convenient route to import features (legs and
+stations) from a `.3d` file, with z-dimension (elevation) and other
+metadata properly included.
+
+To install the plugin, clone or download this repository and copy the
+`SurvexImport` directory into the QGIS python plugins directory, which is
+usually `~/.qgis2/python/plugins` (where `~` on Windows is probably
+`C:\Users\<user>`). 
+
+When installed, a menu item `Import .3d file` should appear on the
+`Vector` drop-down menu.  Running this, a pop-up window appears for
+the user to select a `.3d` file, and chose whether to import legs or
+stations , or both.  For the former (legs) additional options allow
+the user to chose whether to include splay, duplicate, and surface
+legs.  For the latter (stations) the user can chose whether to include
+surface stations.  Finally there is an option to import the CRS from
+the `.3d` file if possible (see below).
+
+On clicking OK, vector layers are created to contain the legs and
+stations as desired.  The CRS is requested for each layer if not
+picked up from the file.  Some attributes are also imported (most
+usefully perhaps, names for stations).
+
+There is one point to bear in mind.  Because of the (current)
+limitations for creating vector layers in memory, the layer type does
+not explicitly indicate that the features include z-dimension
+(elevation) data.  Thus, for example, running the Qgis2threejs plugin
+doesn't quite work as expected as it doesn't know there is a
+z-dimension is available.  To work around this one can save the layer
+to a shapefile, for example to an ESRI Shapefile or a GeoPackage file.
+In QGIS this usually results in the saved shapefile automatically
+being loaded as a new vector layer (or, of course one can explicitly
+load the shapefile).  This new vector layer can then be used with
+Qgis2threejs for example.  To ensure the z-dimension data is correctly
+incorporated when saving to a shapefile, in the 'Save as ...'  dialog
+make sure that the geometry type is specified (for legs this should be
+'LineString', and for stations it should be 'Point') and the 'Include
+z-dimension' box is checked.
+
+Regardless of the above, features (legs or stations) in the created
+layers can be coloured by depth to mimic the behaviour of `aven`
+(thanks to Julian Todd for figuring this out).  The easiest way to do
+this is to use the `.qml` style files provided in this repository.
+For example to colour legs by depth, open the properties dialog and
+under the 'Style' tab, at the bottom select 'Style --> Load Style',
+then choose the `color_legs_by_depth.qml` style file.  This will apply
+a graduated colour scheme with an (inverted) spectral colour ramp.  A
+small limitation is that the ranges are not automatically updated to
+the vertical range of the current data set.  Refreshing this is
+trivial: simply fiddle with the number of 'Classes' and the ranges
+will update to match the current dataset.
+
+For the most part importing the CRS from the `.3d` file should work as
+expected if the survey data has been georeferenced as suggested above.
+If it doesn't, one can always uncheck this option and set the CRS by
+hand.  To maximise the likelihood that CRS import works as expected, use an
+EPSG code in the `*cs out` survex command rather than a PROJ.4 string.
+
+###  QGIS Processing script
+
+The script `import3d.py` is a stripped down version of the above
+plugin which could be useful for testing and troubleshooting.  It can
+be added as a user script to the Processing Toolbox.  It does however
+need customising for specific imports.
 
 ## Notes on georeferencing images, maps, and old surveys
 
@@ -346,9 +429,11 @@ Georeferencing here refers to assigning a co-ordinate system to an
 image or map, or a scanned hard copy of a survey.  The actual steps
 require identifying so-called Ground Control Points (GCPs), which are
 identifiable features on the map for which actual co-ordinates are
-known.  One way to do this is to use the georeferencer plugin in QGIS.
-Then, a useful way to extract co-ordinates for GCPs can be to install
-the OpenLayers plugin which allows one to pull down data from Open
+known.  One way to do this is to use the [GDAL Georeferencer](https://docs.qgis.org/2.8/en/docs/user_manual/plugins/plugins_georeferencer.html "qgis.org")
+plugin in QGIS.
+Then, a useful way to extract co-ordinates for GCPs can be to install the
+[OpenLayers](https://plugins.qgis.org/plugins/openlayers_plugin/ "qgis.org")
+plugin which allows one to pull down data from Open
 Street Map, Google Maps, and so on.  In particular, one can pull down
 satellite imagery into QGIS and use the option to set the GCP
 co-ordinates from the QGIS main window.  Georeferencing then becomes
@@ -368,8 +453,10 @@ may help.
 
 These notes are licensed under a
 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/ "CC BY-NC-SA 4.0").
+That is to say for the most part you are free to copy and use them in
+a non-commercial setting.
 
-Code in this repository is licensed under GLPv3:
+Code in this repository is licensed under GLPv2:
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
