@@ -33,68 +33,10 @@ from PyQt4.QtCore import QVariant
 
 from osgeo.osr import SpatialReference
 
-from os import unlink as file_delete
+from os import unlink
 from re import search as match_regex
 from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
-
-leg_flags = ['DUPLICATE', 'SPLAY', 'SURFACE']
-station_flags = ['SURFACE', 'EXPORTED', 'FIXED', 'ENTRANCE']
-
-# Check newbie exception handling is correctly done
-
-# Extract EPSG number from proj4 string from 3d file using GDAL tools.
-
-def extract_epsg(proj4string):
-    srs = SpatialReference()
-    rc = srs.ImportFromProj4(proj4string)
-    if rc: raise Exception("Invalid proj4 string: %s" % proj4string)
-    code = srs.GetAttrValue('AUTHORITY', 1)
-    return int(code)
-
-def new_layer(title, subtitle, geom, epsg):
-    uri = '%s?crs=epsg:%i' % (geom, epsg) if epsg else geom
-    name = '%s %s' % (title, subtitle) if title else subtitle
-    layer =  QgsVectorLayer(uri, name, 'memory')
-    if not layer.isValid():
-        raise Exception("Invalid layer with %s" % uri)
-    return layer
-
-def add_leg_fields(layer):
-    pr = layer.dataProvider()
-    attrs = [ QgsField(flag, QVariant.Int) for flag in leg_flags ]
-    pr.addAttributes(attrs)
-    layer.updateFields() 
-
-def add_leg(layer, xyz_start, xyz_end, style):
-    if layer is None: return
-    pr = layer.dataProvider()
-    xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
-    attrs = [1 if flag in style else 0 for flag in leg_flags ]
-    linestring = QgsLineStringV2()
-    linestring.setPoints(xyz_pair)
-    feat = QgsFeature()
-    geom = QgsGeometry(linestring)
-    feat.setGeometry(geom) 
-    feat.setAttributes(attrs)
-    pr.addFeatures([feat])
-
-def add_station_fields(layer):
-    pr = layer.dataProvider()
-    attrs = [QgsField(flag, QVariant.Int) for flag in station_flags]
-    attrs.insert(0, QgsField('NAME', QVariant.String))
-    pr.addAttributes(attrs)
-    layer.updateFields() 
-
-def add_station(layer, xyz, name, flags):
-    if layer is None: return
-    attrs = [1 if flag in flags else 0 for flag in station_flags ]
-    attrs.insert(0, name)
-    pr = layer.dataProvider()
-    feat = QgsFeature()
-    feat.setGeometry(QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, *xyz)))
-    feat.setAttributes(attrs)
-    pr.addFeatures([feat])
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
@@ -255,6 +197,82 @@ class SurvexImport:
         filename = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ","", '*.3d')
         self.dlg.selectedFile.setText(filename)
 
+    # Check newbie exception handling is correctly done in the below!
+
+    # Extract EPSG number from proj4 string from 3d file using GDAL tools.
+
+    def extract_epsg(self, proj4string):
+        srs = SpatialReference()
+        rc = srs.ImportFromProj4(proj4string)
+        if rc: raise Exception("Invalid proj4 string: %s" % proj4string)
+        code = srs.GetAttrValue('AUTHORITY', 1)
+        epsg = int(code)
+        QgsMessageLog.logMessage("proj4string %s --> EPSG:%i" % (proj4string, epsg),
+                                 tag='Import .3d', level=QgsMessageLog.INFO)
+        return epsg
+
+    # Add a memory layer with title and geometry Point or LineString
+    # Note that PointZ and LineStringZ are not possible in QGIS 2.18
+    # However the z-info is respected.
+
+    def add_layer(self, title, subtitle, geom, epsg):
+        uri = '%s?crs=epsg:%i' % (geom, epsg) if epsg else geom
+        name = '%s %s' % (title, subtitle) if title else subtitle
+        layer =  QgsVectorLayer(uri, name, 'memory')
+        if not layer.isValid():
+            raise Exception("Invalid layer with %s" % uri)
+        QgsMessageLog.logMessage("Memory layer '%s' called '%s' added" % (uri, name),
+                                 tag='Import .3d', level=QgsMessageLog.INFO)
+        return layer
+
+    # Add attributes (fields) for legs
+
+    leg_flags = ['DUPLICATE', 'SPLAY', 'SURFACE']
+
+    def add_leg_fields(self, layer):
+        pr = layer.dataProvider()
+        attrs = [ QgsField(flag, QVariant.Int) for flag in self.leg_flags ]
+        pr.addAttributes(attrs)
+        layer.updateFields() 
+
+    # Add a leg into the legs layer, style is raided for the attributes
+    
+    def add_leg(self, layer, xyz_start, xyz_end, style):
+        if layer is None: return
+        pr = layer.dataProvider()
+        xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
+        attrs = [1 if flag in style else 0 for flag in self.leg_flags ]
+        linestring = QgsLineStringV2()
+        linestring.setPoints(xyz_pair)
+        feat = QgsFeature()
+        geom = QgsGeometry(linestring)
+        feat.setGeometry(geom) 
+        feat.setAttributes(attrs)
+        pr.addFeatures([feat])
+
+    # Add attributes (fields) for stations
+
+    station_flags = ['SURFACE', 'EXPORTED', 'FIXED', 'ENTRANCE']
+        
+    def add_station_fields(self, layer):
+        pr = layer.dataProvider()
+        attrs = [QgsField(flag, QVariant.Int) for flag in self.station_flags]
+        attrs.insert(0, QgsField('NAME', QVariant.String))
+        pr.addAttributes(attrs)
+        layer.updateFields() 
+
+    # Add a station into the stations layer, with attributes
+
+    def add_station(self, layer, xyz, name, flags):
+        if layer is None: return
+        attrs = [1 if flag in flags else 0 for flag in self.station_flags ]
+        attrs.insert(0, name)
+        pr = layer.dataProvider()
+        feat = QgsFeature()
+        feat.setGeometry(QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, *xyz)))
+        feat.setAttributes(attrs)
+        pr.addFeatures([feat])
+
     def run(self):
         """Run method that performs all the real work"""
         # show the dialog
@@ -325,7 +343,7 @@ class SurvexImport:
 
                         if get_crs and fields[0] == 'CS':
                             proj4string = ' '.join(fields[1:])
-                            epsg = extract_epsg(proj4string)
+                            epsg = self.extract_epsg(proj4string)
 
                         if fields[0] == 'MOVE':
                             xyz_start = [float(v) for v in fields[1:4]]
@@ -334,13 +352,13 @@ class SurvexImport:
                             xyz_end = [float(v) for v in fields[1:4]]
                             style = ' '.join(fields[5:])
                             if not leg_layer:
-                                leg_layer = new_layer(title, 'legs', 'LineString', epsg)
-                                add_leg_fields(leg_layer)
+                                leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
+                                self.add_leg_fields(leg_layer)
                             while (True):
                                 if exclude_surface_legs and 'SURFACE' in style: break
                                 if exclude_splay_legs and 'SPLAY' in style: break
                                 if exclude_duplicate_legs and 'DUPLICATE' in style: break
-                                add_leg(leg_layer, xyz_start, xyz_end, style)
+                                self.add_leg(leg_layer, xyz_start, xyz_end, style)
                                 break
                             xyz_start = xyz_end
 
@@ -349,11 +367,11 @@ class SurvexImport:
                             name = fields[4].strip('[]')
                             flags = ' '.join(fields[5:])
                             if not station_layer:
-                                station_layer = new_layer(title, 'stations', 'Point', epsg)
-                                add_station_fields(station_layer)
+                                station_layer = self.add_layer(title, 'stations', 'Point', epsg)
+                                self.add_station_fields(station_layer)
                             while (True):
                                 if exclude_surface_stations and 'SURFACE' in flags: break
-                                add_station(station_layer, xyz, name, flags)
+                                self.add_station(station_layer, xyz, name, flags)
                                 break
                 
 
@@ -365,7 +383,7 @@ class SurvexImport:
                     station_layer.updateExtents() 
                     QgsMapLayerRegistry.instance().addMapLayers([station_layer])
 
-                file_delete(dump3dfile)
+                unlink(dump3dfile)
 
                 # Here's where we catch all exceptions, cleaning up a possible
                 # temporary file and re-raising the exception 
@@ -373,7 +391,7 @@ class SurvexImport:
             except Exception as e:
 
                 if dump3dfile and os.path.exists(dump3dfile):
-                    file_delete(dump3dfile)
+                    unlink(dump3dfile)
 
                 raise
 
