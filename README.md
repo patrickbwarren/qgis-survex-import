@@ -3,6 +3,9 @@
 QGIS import plugin for survex `.3d` files.
 To get going straight away, skip to the [install instructions](#qgis-plugin).
 
+A prettified version of these notes can be found
+[in the PDF version](README.pdf).
+
 ## Summary
 
 The idea that reduced cave survey data
@@ -29,7 +32,7 @@ from the [Open Geospatial Consortium](https://en.wikipedia.org/wiki/Open_Geospat
 which are well known containers for GIS vector data.  These formats specify:
 
 * geometries comprising points, lines, polylines (line strings), and polygons,
-  with or without elevation (z) data;
+  with or without z-dimension (elevationx) data;
 * geometry attributes consisting of records of various kinds
   that are user-configurable;
 * a co-ordinate reference system, and possible other metadata.
@@ -96,9 +99,9 @@ even degrees and decimal minutes).  For example the entrance
 to Dow Cave is at NGR SD&nbsp;98378&nbsp;74300 (see below),
 which translates to
 (WGS84) 54&deg;&nbsp;9'&nbsp;52.2"&nbsp;N 2&deg;&nbsp;1'&nbsp;34.8"&nbsp;W
-in deg / min / sec (where one decimal place in the seconds corresponds to approximately 3m on the ground),
-or (WGS84) 54.16450&deg;&nbsp;N 2.02634&deg;&nbsp;W in decimal degrees
-(where five decimal places corresponds approximately to
+where one decimal place in the seconds corresponds to approximately 3m on the ground,
+or (WGS84) 54.16450&deg;&nbsp;N 2.02634&deg;&nbsp;W
+where five decimal places corresponds approximately to
 1m on the ground).
 Online converters between British National Grid references and
 WGS84 latitudes and logitudes can be found on the internet by searching
@@ -226,7 +229,7 @@ and the master file `DowProv.svx` contains
 to add the metadata into the survex files).
 
 Thus the file `DowCave.svx` contains a `*fix` which specifies the entrance
-location as a 10-fig NGR `SD 98378 74300`, without the `SD` part.  The
+location as a 10-fig NGR SD 98378 74300, without the SD part.  The
 easting and northing here (and elevation
 [OSDN](https://en.wikipedia.org/wiki/Ordnance_datum "wikipedia"))
 were obtained by field work.
@@ -329,6 +332,9 @@ example a centreline onto a map.
 
 ### Three dimensional import
 
+This import route requires command-line access to the
+[GDAL utilities](http://www.gdal.org/ogr_utilities.html "gdal.org").
+
 From the DXF file, the centreline can be extracted by running (at the
 command line)
 ```
@@ -351,9 +357,6 @@ can be extracted by running
 ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf -where "Layer='Labels'" -a_srs EPSG:27700
 ```
 
-This import route requires command-line access to the
-[GDAL utilities](http://www.gdal.org/ogr_utilities.html "gdal.org").
-
 ### Import using QGIS plugin
 
 The plugin provides a convenient route to import features (legs and
@@ -367,9 +370,9 @@ usually `~/.qgis2/python/plugins` (where `~` on Windows is probably
 
 When installed, a menu item 'Import .3d file' should appear on the
 'Vector' drop-down menu in the main QGIS window.  Running this, a
-pop-up window appears for the user to select a `.3d` file, and chose
+pop-up window appears for the user to select a `.3d` file, and choose
 whether to import legs or stations , or both.  For the former (legs)
-additional options allow the user to chose whether to include splay,
+additional options allow the user to choose whether to include splay,
 duplicate, and surface legs.  For the latter (stations) the user can
 chose whether to include surface stations.  Finally there is an option
 to import the CRS from the `.3d` file if possible (see below).
