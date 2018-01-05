@@ -316,7 +316,7 @@ class SurvexImport:
             # TO BE DONE: for MAC OS X add 'Darwin' : '...' option in here...
 
             dump3d_dict = {'Linux' : '/usr/bin/dump3d',
-                           'Windows' : 'C:\Program Files (x86)\Survex\dump3d'}
+                           'Windows' : 'C:\Program Files (x86)\Survex\dump3d.exe'}
 
             try:
                 dump3d_exe = dump3d_dict[platform.system()]
