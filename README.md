@@ -315,7 +315,7 @@ SRS, and applied to _all_ the included survey files,
 in this case taking into account 
 the range of dates which spans some 30 years.
 
-## Import methods without plugins
+## GIS import methods
 
 ### Quick-and-dirty two dimensional (flat) import
 
@@ -327,7 +327,7 @@ this direct route does not import z-dimension (elevation) data, but
 nevertheless could be useful as a quick and dirty way to throw for
 example a centreline onto a map.
 
-### Three dimensional GIS import
+### Three dimensional import
 
 From the DXF file, the centreline can be extracted by running (at the
 command line)
@@ -353,8 +353,6 @@ ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf -where "Layer='Labe
 
 This import route requires command-line access to the
 [GDAL utilities](http://www.gdal.org/ogr_utilities.html "gdal.org").
-
-## Importing from .3d files using plugins
 
 ### Import using QGIS plugin
 
