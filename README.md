@@ -315,7 +315,7 @@ SRS, and applied to _all_ the included survey files,
 in this case taking into account 
 the range of dates which spans some 30 years.
 
-## Importing from .3d files without plugins
+## Import methods without plugins
 
 ### Quick-and-dirty two dimensional (flat) import
 
@@ -356,9 +356,9 @@ This import route requires command-line access to the
 
 ## Importing from .3d files using plugins
 
-### QGIS plugin
+### Import using QGIS plugin
 
-This plugin provides a convenient route to import features (legs and
+The plugin provides a convenient route to import features (legs and
 stations) from a `.3d` file, with z-dimension (elevation) and other
 metadata properly included.
 
@@ -367,14 +367,14 @@ To install the plugin, clone or download this repository and copy the
 usually `~/.qgis2/python/plugins` (where `~` on Windows is probably
 `C:\Users\<user>`). 
 
-When installed, a menu item `Import .3d file` should appear on the
-`Vector` drop-down menu.  Running this, a pop-up window appears for
-the user to select a `.3d` file, and chose whether to import legs or
-stations , or both.  For the former (legs) additional options allow
-the user to chose whether to include splay, duplicate, and surface
-legs.  For the latter (stations) the user can chose whether to include
-surface stations.  Finally there is an option to import the CRS from
-the `.3d` file if possible (see below).
+When installed, a menu item 'Import .3d file' should appear on the
+'Vector' drop-down menu in the main QGIS window.  Running this, a
+pop-up window appears for the user to select a `.3d` file, and chose
+whether to import legs or stations , or both.  For the former (legs)
+additional options allow the user to chose whether to include splay,
+duplicate, and surface legs.  For the latter (stations) the user can
+chose whether to include surface stations.  Finally there is an option
+to import the CRS from the `.3d` file if possible (see below).
 
 On clicking OK, vector layers are created to contain the legs and
 stations as desired.  The CRS is requested for each layer if not
@@ -382,32 +382,32 @@ picked up from the file.  Some attributes are also imported (most
 usefully perhaps, names for stations).
 
 There is one point to bear in mind.  Because of the (current)
-limitations for creating vector layers in memory, the layer type does
-not explicitly indicate that the features include z-dimension
+limitations in QGIS for creating vector layers in memory, the layer type does
+not explicitly know that the features include z-dimension
 (elevation) data.  Thus, for example, running the Qgis2threejs plugin
-doesn't quite work as expected as it doesn't know there is a
-z-dimension is available.  To work around this one can save the layer
+doesn't quite work as expected.  To work around this one can save the layer
 to a shapefile, for example to an ESRI Shapefile or a GeoPackage file.
-In QGIS this usually results in the saved shapefile automatically
-being loaded as a new vector layer (or, of course one can explicitly
-load the shapefile).  This new vector layer can then be used with
-Qgis2threejs for example.  To ensure the z-dimension data is correctly
+(In QGIS this usually results in the saved shapefile automatically
+being loaded as a new vector layer, or of course one can explicitly
+load the new shapefile.)  To ensure the z-dimension data is correctly
 incorporated when saving to a shapefile, in the 'Save as ...'  dialog
 make sure that the geometry type is specified (for legs this should be
 'LineString', and for stations it should be 'Point') and the 'Include
-z-dimension' box is checked.
+z-dimension' box is checked.  A new vector layer created this way can
+then be used with Qgis2threejs for example.
 
 Regardless of the above, features (legs or stations) in the created
-layers can be coloured by depth to mimic the behaviour of `aven`
-(thanks to Julian Todd for figuring this out).  The easiest way to do
-this is to use the `.qml` style files provided in this repository.
-For example to colour legs by depth, open the properties dialog and
-under the 'Style' tab, at the bottom select 'Style --> Load Style',
-then choose the `color_legs_by_depth.qml` style file.  This will apply
-a graduated colour scheme with an (inverted) spectral colour ramp.  A
-small limitation is that the ranges are not automatically updated to
-the vertical range of the current data set.  Refreshing this is
-trivial: simply fiddle with the number of 'Classes' and the ranges
+layers can be coloured by depth to mimic the behaviour of the `aven`
+viewer in survex (hat tip Julian Todd for figuring this out).  The
+easiest way to do this is to use the `.qml` style files provided in
+this repository.  For example to colour legs by depth, open the
+properties dialog and under the 'Style' tab, at the bottom select
+'Style --> Load Style', then choose the `color_legs_by_depth.qml`
+style file.  This will apply a graduated colour scheme with an
+inverted spectral colour ramp.  A small limitation is that the ranges
+are not automatically updated to match the vertical range of the
+current data set.  Refreshing this is trivial: simply fiddle with the
+number of 'Classes' (box on right hand side of 'Style' tab) and the ranges
 will update to match the current dataset.
 
 For the most part importing the CRS from the `.3d` file should work as
@@ -416,12 +416,16 @@ If it doesn't, one can always uncheck this option and set the CRS by
 hand.  To maximise the likelihood that CRS import works as expected, use an
 EPSG code in the `*cs out` survex command rather than a PROJ.4 string.
 
-###  QGIS Processing script
+###  Extra scripts
 
-The script `import3d.py` is a stripped down version of the above
-plugin which could be useful for testing and troubleshooting.  It can
-be added as a user script to the Processing Toolbox.  It does however
-need customising for specific imports.
+In the `extra` directory, the script `import3d.py` is a stripped down
+version of the plugin which could be useful for testing and
+troubleshooting.  It can be added as a user script to the Processing
+Toolbox.
+
+Also in the `extra` directory, `survex_import_with_tmpfile.py` is a
+version of the main plugin script which uses a temporary file to cache
+the output of `dump3d`.
 
 ## Notes on georeferencing images, maps, and old surveys
 

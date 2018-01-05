@@ -13,6 +13,4 @@ so on Windows you might have to use something like
 to look at them.  The processed data is `DowProv.3d`, generated using
 survex 1.2.32.
 
-
-
-
+For more details see the main `README.md` in the top level directory.

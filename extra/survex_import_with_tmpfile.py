@@ -231,7 +231,7 @@ class SurvexImport:
 
     def add_leg_fields(self, layer):
         pr = layer.dataProvider()
-        attrs = [QgsField(flag, QVariant.Int) for flag in self.leg_flags]
+        attrs = [ QgsField(flag, QVariant.Int) for flag in self.leg_flags ]
         pr.addAttributes(attrs)
         layer.updateFields() 
 
@@ -241,7 +241,7 @@ class SurvexImport:
         if layer is None: return
         pr = layer.dataProvider()
         xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
-        attrs = [1 if flag in style else 0 for flag in self.leg_flags]
+        attrs = [1 if flag in style else 0 for flag in self.leg_flags ]
         linestring = QgsLineStringV2()
         linestring.setPoints(xyz_pair)
         feat = QgsFeature()
@@ -265,7 +265,7 @@ class SurvexImport:
 
     def add_station(self, layer, xyz, name, flags):
         if layer is None: return
-        attrs = [1 if flag in flags else 0 for flag in self.station_flags]
+        attrs = [1 if flag in flags else 0 for flag in self.station_flags ]
         attrs.insert(0, name)
         pr = layer.dataProvider()
         feat = QgsFeature()
@@ -297,79 +297,102 @@ class SurvexImport:
 
             get_crs = self.dlg.checkGetCRS.isChecked()
 
-            if not os.path.exists(survex3dfile):
-                raise Exception("File '%s' doesn't exist" % survex3dfile)
+            # catch all exceptions and deal with them at the end
 
-            # Run dump3d and slurp the output (note currently stderr is unused)
+            try:
+
+                # Create a temporary file we can write dump3d output into
+
+                f = NamedTemporaryFile(delete=False)
+                f.close()
+
+                dump3dfile = f.name
+
+                if not os.path.exists(dump3dfile):
+                    raise Exception("Couldn't create temporary file")
+
+                # Run dump3d saving the output
                 
-            p = Popen(['dump3d', survex3dfile], stdout=PIPE, stderr=PIPE)
+                command = "dump3d %s > %s" % (survex3dfile, dump3dfile)
+                p = Popen(command, shell=True, stderr=PIPE)
+                rc = p.wait()
+                err = p.stderr.read()
 
-            dump3d_out, dump3d_err = p.communicate()
+                if rc: raise Exception("dump3d failed with return code %i" % rc)
 
-            if p.returncode:
-                for line in dump3d_out.splitlines():
-                    QgsMessageLog.logMessage(line, tag='Import .3d', level=QgsMessageLog.CRITICAL)
-                raise Exception("dump3d failed, see log for details")
-
-            # Now parse the dump3d output
+                # Now parse the dump3d output
     
-            leg_layer, station_layer = None, None
-            
-            title, epsg = None, None
+                leg_layer, station_layer = None, None
+                
+                title, epsg = None, None
 
-            legs = []
+                legs = []
 
-            # We run this like a gawk /pattern/ { action } script
+                # We run this like a gawk /pattern/ { action } script
+
+                with open(dump3dfile) as fp:  
     
-            for line in dump3d_out.splitlines():
+                    for line in iter(fp):
 
-                fields = line.split()
+                        fields = line.split()
             
-                legs_append = False
+                        legs_append = False
 
-                if fields[0] == 'TITLE':
-                    title = ' '.join(fields[1:]).strip('"')
+                        if fields[0] == 'TITLE':
+                            title = ' '.join(fields[1:]).strip('"')
 
-                if get_crs and fields[0] == 'CS':
-                    proj4string = ' '.join(fields[1:])
-                    epsg = self.extract_epsg(proj4string)
+                        if get_crs and fields[0] == 'CS':
+                            proj4string = ' '.join(fields[1:])
+                            epsg = self.extract_epsg(proj4string)
 
-                if fields[0] == 'MOVE':
-                    xyz_start = [float(v) for v in fields[1:4]]
+                        if fields[0] == 'MOVE':
+                            xyz_start = [float(v) for v in fields[1:4]]
         
-                if include_legs and fields[0] == 'LINE': 
-                    xyz_end = [float(v) for v in fields[1:4]]
-                    style = ' '.join(fields[5:])
-                    if not leg_layer:
-                        leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
-                        self.add_leg_fields(leg_layer)
-                    while (True):
-                        if exclude_surface_legs and 'SURFACE' in style: break
-                        if exclude_splay_legs and 'SPLAY' in style: break
-                        if exclude_duplicate_legs and 'DUPLICATE' in style: break
-                        self.add_leg(leg_layer, xyz_start, xyz_end, style)
-                        break
-                    xyz_start = xyz_end
+                        if include_legs and fields[0] == 'LINE': 
+                            xyz_end = [float(v) for v in fields[1:4]]
+                            style = ' '.join(fields[5:])
+                            if not leg_layer:
+                                leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
+                                self.add_leg_fields(leg_layer)
+                            while (True):
+                                if exclude_surface_legs and 'SURFACE' in style: break
+                                if exclude_splay_legs and 'SPLAY' in style: break
+                                if exclude_duplicate_legs and 'DUPLICATE' in style: break
+                                self.add_leg(leg_layer, xyz_start, xyz_end, style)
+                                break
+                            xyz_start = xyz_end
 
-                if include_stations and fields[0] == 'NODE':
-                    xyz = [float(v) for v in fields[1:4]]
-                    name = fields[4].strip('[]')
-                    flags = ' '.join(fields[5:])
-                    if not station_layer:
-                        station_layer = self.add_layer(title, 'stations', 'Point', epsg)
-                        self.add_station_fields(station_layer)
-                    while (True):
-                        if exclude_surface_stations and 'SURFACE' in flags: break
-                        self.add_station(station_layer, xyz, name, flags)
-                        break
+                        if include_stations and fields[0] == 'NODE':
+                            xyz = [float(v) for v in fields[1:4]]
+                            name = fields[4].strip('[]')
+                            flags = ' '.join(fields[5:])
+                            if not station_layer:
+                                station_layer = self.add_layer(title, 'stations', 'Point', epsg)
+                                self.add_station_fields(station_layer)
+                            while (True):
+                                if exclude_surface_stations and 'SURFACE' in flags: break
+                                self.add_station(station_layer, xyz, name, flags)
+                                break
                 
 
-            if leg_layer:
-                leg_layer.updateExtents() 
-                QgsMapLayerRegistry.instance().addMapLayers([leg_layer])
+                if leg_layer:
+                    leg_layer.updateExtents() 
+                    QgsMapLayerRegistry.instance().addMapLayers([leg_layer])
 
-            if station_layer:
-                station_layer.updateExtents() 
-                QgsMapLayerRegistry.instance().addMapLayers([station_layer])
+                if station_layer:
+                    station_layer.updateExtents() 
+                    QgsMapLayerRegistry.instance().addMapLayers([station_layer])
+
+                unlink(dump3dfile)
+
+                # Here's where we catch all exceptions, cleaning up a possible
+                # temporary file and re-raising the exception 
+
+            except Exception as e:
+
+                if dump3dfile and os.path.exists(dump3dfile):
+                    unlink(dump3dfile)
+
+                raise
 
             
