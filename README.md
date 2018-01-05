@@ -363,7 +363,7 @@ metadata properly included.
 To install the plugin, clone or download this repository and copy the
 `SurvexImport` directory into the QGIS python plugins directory, which is
 usually `~/.qgis2/python/plugins` (where `~` on Windows is probably
-`C:\Users\<user>`). 
+`C:\Users\<user>`).  
 
 When installed, a menu item 'Import .3d file' should appear on the
 'Vector' drop-down menu in the main QGIS window.  Running this, a
@@ -414,7 +414,27 @@ If it doesn't, one can always uncheck this option and set the CRS by
 hand.  To maximise the likelihood that CRS import works as expected, use an
 EPSG code in the `*cs out` survex command rather than a PROJ.4 string.
 
-###  Extra scripts
+#### Platform-specific location of dump3d
+
+The plugin uses `dump3d` to dump the contents of the
+`.3d` file to text, and obviously will fail if it can't find `dump3d`,
+or there is a survex version mismatch (most likely, by trying to
+import a `.3d` file 'from the future' with an older survex
+installation).
+
+If you have a non-standard survex installation you can edit
+`survex_python.py` to add an entry for the platform-specific location
+of the `dump3d` executable.  The place to look is where a
+dictionary of platform-specific executables is defined:
+```
+dump3d_dict = {'Linux' : '/usr/bin/dump3d',
+               'Windows' : 'C:\Program Files (x86)\Survex\dump3d'}
+```
+The keys here are the return values of a call to `platform.system()`.
+At the moment this dictionary lacks an entry for MAC OS X (eg
+`'Darwin' : '...'`) but this will be fixed at some point.
+
+###  Other import scripts
 
 In the `extra` directory, the script `import3d.py` is a stripped down
 version of the plugin which could be useful for testing and
@@ -422,8 +442,8 @@ troubleshooting.  It can be added as a user script to the Processing
 Toolbox.
 
 Also in the `extra` directory, `survex_import_with_tmpfile.py` is a
-version of the main plugin script which uses a temporary file to cache
-the output of `dump3d`.
+slightly old version of the main plugin script which uses a temporary
+file to cache the output of `dump3d`.
 
 ## Notes on georeferencing images, maps, and old surveys
 

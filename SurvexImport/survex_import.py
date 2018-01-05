@@ -34,9 +34,10 @@ from PyQt4.QtCore import QVariant
 from osgeo.osr import SpatialReference
 
 from os import unlink
-from re import search as match_regex
+from re import search
 from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
+import platform
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
@@ -199,11 +200,20 @@ class SurvexImport:
 
     # Check newbie exception handling is correctly done in the below!
 
-    # Extract EPSG number from proj4 string from 3d file using GDAL tools.
+    # Extract EPSG number from PROJ.4 string from 3d file using GDAL tools.
+    # First try to match an explicit EPSG number, and check this is recognised.
+    # If this fails, try to match the entire PROJ.4 string.  The reason for 
+    # this somewhat convoluted route is to ensure if there is an EPSG number
+    # in the passed argument, it is returned 'as is' and not transmuted
+    # into another EPSG number with ostensibly the same CRS.
 
     def extract_epsg(self, proj4string):
         srs = SpatialReference()
-        rc = srs.ImportFromProj4(proj4string)
+        epsg_match = search('epsg:([0-9]*)', proj4string)
+        if epsg_match:
+            rc = srs.ImportFromEPSG(int(epsg_match.group(1)))
+        else:
+            rc = srs.ImportFromProj4(proj4string)
         if rc: raise Exception("Invalid proj4 string: %s" % proj4string)
         code = srs.GetAttrValue('AUTHORITY', 1)
         epsg = int(code)
@@ -301,8 +311,22 @@ class SurvexImport:
                 raise Exception("File '%s' doesn't exist" % survex3dfile)
 
             # Run dump3d and slurp the output (note currently stderr is unused)
-                
-            p = Popen(['dump3d', survex3dfile], stdout=PIPE, stderr=PIPE)
+            # First, try to figure out where the executable is.
+
+            # TO BE DONE: for MAC OS X add 'Darwin' : '...' option in here...
+
+            dump3d_dict = {'Linux' : '/usr/bin/dump3d',
+                           'Windows' : 'C:\Program Files (x86)\Survex\dump3d'}
+
+            try:
+                dump3d_exe = dump3d_dict[platform.system()]
+            except KeyError:
+                raise Exception("Unrecognised system '%s'" % platform.system())
+
+            if not os.path.exists(dump3d_exe):
+                raise Exception("Executable '%s' doesn't exist" % dump3d_exe)
+
+            p = Popen([dump3d_exe, survex3dfile], stdout=PIPE, stderr=PIPE)
 
             dump3d_out, dump3d_err = p.communicate()
 
