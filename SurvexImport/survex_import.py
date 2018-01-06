@@ -200,6 +200,9 @@ class SurvexImport:
 
     # Functions to deal with .3d CRS, adding legs, and adding stations
 
+    # << perfection is achieved not when nothing more can be added 
+    #      but when nothing more can be taken away >>
+
     # Extract EPSG number from PROJ.4 string from 3d file using GDAL tools.
     # First try to match an explicit EPSG number, and check this is recognised.
     # If this fails, try to match the entire PROJ.4 string.  The reason for 
@@ -291,9 +294,6 @@ class SurvexImport:
         if result:
 
             # This is where all the work is done.
-
-            # 'perfection is achieved not when nothing more can be
-            # added but when nothing more can be taken away'
 
             survex3dfile = self.dlg.selectedFile.text()
 
