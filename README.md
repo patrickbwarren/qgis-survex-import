@@ -288,9 +288,9 @@ by adding the following to the top of the `all.svx` file:
 ```
 The first line specifies the custom SRS in which the co-ordinates of
 the surface fixed points in the Austria data set are specified.  The
-second line determines the output SRS.  This doesn't really matter to
+second line determines the output SRS.  This doesn't really matter too
 much as long as the SRS can be recognised by the GIS platform: this
-example uses the MGI / Austria Gauss-Kruger (GK) Central SRS
+example uses the MGI / Austria Gauss-Kr&uuml;ger (GK) Central SRS
 (`EPSG:31255`), where the _only_ difference compared to custom SRS is in
 the `+y_0` false origin.  Another sensible output SRS could be `EPSG:3045`
 which is (WGS84) UTM zone 33N.
