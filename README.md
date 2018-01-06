@@ -272,7 +272,7 @@ entrance has magically moved to
 ```
 and the exported SRS from `dump3d` is
 ```
-CS +init=epsg:32630 +no_defs
+CS +init=epsg:3042 +no_defs
 ```
 As expected, the entrance location in UTM
 is the same as obtained by converting the original NGR first
