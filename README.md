@@ -104,7 +104,7 @@ or (WGS84) 54.16450&deg;&nbsp;N 2.02634&deg;&nbsp;W
 where five decimal places corresponds approximately to
 1m on the ground).
 Online converters between British National Grid references and
-WGS84 latitudes and logitudes can be found on the internet by searching
+WGS84 latitudes and longitudes can be found on the internet by searching
 for 'OSGB36 to WGS84 converter'.  To check things,
 the WGS84 latitude and longitude in
 decimal degrees can be copied and pasted into Google maps for example, or for
@@ -231,13 +231,13 @@ to add the metadata into the survex files).
 Thus the file `DowCave.svx` contains a `*fix` which specifies the entrance
 location as a 10-fig NGR SD 98378 74300, without the SD part.  The
 easting and northing here (and elevation
-[OSDN](https://en.wikipedia.org/wiki/Ordnance_datum "wikipedia"))
+[ODN](https://en.wikipedia.org/wiki/Ordnance_datum "wikipedia"))
 were obtained by field work.
-Then the file `DowProv.svx` specifies input SRS is the OS GB SD square, and
+Then the file `DowProv.svx` specifies input SRS is the SD square, and
 asks that the reduced data should be exported using the all-numeric British
 National Grid scheme, here codified with a
 [European Petroleum Survey Group (EPSG)](http://spatialreference.org/ "spatial reference website")
-code.  Using EPSG numbers avoids
+code, here `EPSG:27700`.  Using EPSG numbers avoids
 potential misunderstanding when importing into a GIS platform, for
 example in QGIS one can find the exact exported SRS
 easily enough by searching on
@@ -246,7 +246,7 @@ the EPSG number.
 If you check the processed survey in `aven`, or run `3dtopos` on the `.3d` file,
 the processed entrance co-ordinates are now indeed
 ```
-(398378.00, 474300.00,   334.00 ) dowprov.dowcave.dow1.1
+(398378.00, 474300.00,   334.00 ) dowprov.dowcave.entrance
 ```
 Whilst this may seem like a crazily over-the-top
 way to add a '3' and '4' to the entrance co-ordinates, it is actually very simple to implement:
@@ -263,12 +263,12 @@ pushed to a GIS application).
 As a slightly less trivial example, one can ask for the reduced survey
 data to be re-projected as UTM co-ordinates.  This can be done almost
 totally trivially by replacing the previous `*cs out` command with
-`*cs out EPSG:32630` which specifies the output SRS is (WGS84) UTM
+`*cs out EPSG:3042` which specifies the output SRS is (WGS84) UTM
 zone 30N (this includes zone 30U).  If we now
 reduce the data with `cavern` and check with `3dtopos` we find the Dow Cave
 entrance has magically moved to
 ```
-(563570.22, 6002262.20,   384.57 ) dowprov.dowcave.dow1.1
+(563570.22, 6002262.20,   384.57 ) dowprov.dowcave.entrance
 ```
 and the exported SRS from `dump3d` is
 ```
@@ -291,8 +291,8 @@ the surface fixed points in the Austria data set are specified.  The
 second line determines the output SRS.  This doesn't really matter to
 much as long as the SRS can be recognised by the GIS platform: this
 example uses the MGI / Austria Gauss-Kruger (GK) Central SRS
-(EPSG:31255), where the _only_ difference compared to custom SRS is in
-the y_0 false origin.  Another sensible output SRS would be `EPSG:32633`
+(`EPSG:31255`), where the _only_ difference compared to custom SRS is in
+the `+y_0` false origin.  Another sensible output SRS could be `EPSG:3045`
 which is (WGS84) UTM zone 33N.
 
 I've gone into these examples in some detail as the
@@ -307,7 +307,7 @@ commands.  The `DowProv.svx` master file thus also contains the lines
 (the first two are just comments)
 ```
 ; Mag dec calculated for SD 97480 72608
-;(Dowbergill Bridge, just above Kettlewell)
+; Dowbergill Bridge, just above Kettlewell
 
 *declination auto 97480 72608 225
 ```
@@ -394,7 +394,7 @@ load the new shapefile.)  To ensure the z-dimension data is correctly
 incorporated when saving to a shapefile, in the 'Save as ...'  dialog
 make sure that the geometry type is specified (for legs this should be
 'LineString', and for stations it should be 'Point') and the 'Include
-z-dimension' box is checked.  A new vector layer created this way can
+z-dimension' box is checked.  The new vector layer created this way can
 then be used with Qgis2threejs for example.
 
 Regardless of the above, features (legs or stations) in the created
@@ -499,6 +499,6 @@ along with this program.  If not, see
 
 ### Copyright
 
-Copyright &copy; (2017) Patrick B Warren.
+Copyright &copy; (2017, 2018) Patrick B Warren.
 
 

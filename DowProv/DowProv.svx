@@ -42,10 +42,10 @@
 *cs OSGB:SD
 *cs out EPSG:27700
 
-;*cs out EPSG:32630 ; WGS84 UTM zone 30N (includes zone 30U)
+; *cs out EPSG:3042 ; WGS84 UTM zone 30N (includes zone 30U)
 
 ; Mag dec calculated for SD 97480 72608
-;(Dowbergill Bridge, just above Kettlewell)
+; Dowbergill Bridge, just above Kettlewell
 
 *declination auto 97480 72608 225
 
