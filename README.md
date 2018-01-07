@@ -14,9 +14,10 @@ Geographic Information System (GIS) platform such as
 [QGIS](http://www.qgis.org/ "QGIS website") is practically a no-brainer,
 as it can then be integrated
 with other geographical data such as maps, satellite imagery, digital
-elevation models, and the like.  Now this is much closer to being
+elevation models, and the like.  This is much closer to being
 achievable than one might think.  Here's the contents of a
-typical [survex](https://survex.com/ "survex website") `.3d` file as exposed by running `dump3d`:
+typical [survex](https://survex.com/ "survex website")
+`.3d` file as exposed by running `dump3d`:
 
 * survey metadata: title, date, and co-ordinate reference system;
 * strings of survey legs with metadata: names,
@@ -37,7 +38,7 @@ which are well known containers for GIS vector data.  These formats specify:
   that are user-configurable;
 * a co-ordinate reference system, and possible other metadata.
 
-Now at this point you are supposed to slap yourself on the head and
+At this point you are supposed to slap yourself on the head and
 ask why on earth we haven't been using GIS shapefiles
 for storing reduced survey data all along!  The format is certainly
 flexible enough to contain all the information normally included in a
@@ -56,11 +57,11 @@ An SRS usually comprises:
 
 * a [geodetic datum](https://en.wikipedia.org/wiki/Geodetic_datum "wikipedia")
 or reference ellipsoid which specifies the overall shape
-of the earth's surface (eg
+of the earth's surface, e.g. the
 [WGS84](https://en.wikipedia.org/wiki/World_Geodetic_System "wikipedia") datum
-used in GPS, or the 
+used in GPS or the 
 [OSGB36](https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid "wikipedia")
-datum used by the Ordnance Survey (OS) in the UK);
+datum used by the Ordnance Survey (OS) in the UK;
 
 * a map projection which is nearly always a
 [Transverse Mercator](https://en.wikipedia.org/wiki/Transverse_Mercator_projection "wikipedia")
@@ -83,15 +84,16 @@ example is the
 [datum shift between WGS84 and OSGB36](https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid#Datum_shift_between_OSGB_36_and_WGS_84 "wikipedia")
 that nowadays only shows up in
 [Magic Map](http://www.natureonthemap.naturalengland.org.uk/MagicMap.aspx "Magic Map").
-Modern usage nearly always corresponds to the WGS84 datum, which is
-pretty much universally used nowadays.  For example it's used in
-[Google Earth](https://en.wikipedia.org/wiki/Google_Earth "wikipedia")
-and in fact Google's
+
+The WGS84 datum is pretty much universally used nowadays on the internet,
+for example Google's
 [Keyhole Markup Language (KML)](https://developers.google.com/kml/ "Google KML")
-only supports WGS84 latitude and longitude.
-Most GPS devices will report WGS84 latitude and longitude, though
-more often than not you won't see this directly but rather get metric
-UTM co-ordinates, or metric British National Grid co-ordinates.
+only supports WGS84 latitude and longitude, to upload to
+[Google Earth](https://en.wikipedia.org/wiki/Google_Earth "wikipedia").
+Also most GPS devices report latitude and longitude for the WGS84
+datum, though more often than not you won't see this directly but
+rather get metric UTM co-ordinates, or metric British National Grid
+co-ordinates.
 
 To further add to the confusion, latitude and longitude can be
 reported in decimal degrees; or degrees, minutes, and seconds (or
@@ -158,7 +160,6 @@ obvious but if you accidentally paste
 OSGB36 latitudes and longitudes into a UTM
 converter, you will likely be out by 50-100m.
 
-
 ## Georeferencing cave survey data
 
 Back to cave surveying: for most surveys the earth's surface can be
@@ -171,7 +172,7 @@ should introduce negligible errors, at least in comparison to the
 errors that typically creep into cave survey projects.
 
 As long as this local cave co-ordinate system can be tied into one of
-the known geodetic SRS schemes (ie
+the known geodetic SRS schemes (i.e.
 [_georeferenced_](https://en.wikipedia.org/wiki/Georeferencing "wikipedia")),
 then any feature in the cave will have a known position in GIS terms,
 and can thus be tied into any other georeferenced data such as maps,
@@ -292,7 +293,7 @@ second line determines the output SRS.  This doesn't really matter too
 much as long as the SRS can be recognised by the GIS platform: this
 example uses the MGI / Austria Gauss-Kr&uuml;ger (GK) Central SRS
 (`EPSG:31255`), where the _only_ difference compared to custom SRS is in
-the `+y_0` false origin.  Another sensible output SRS could be `EPSG:3045`
+the `+y_0` false origin.  Another output SRS could be `EPSG:3045`
 which is (WGS84) UTM zone 33N.
 
 I've gone into these examples in some detail as the
@@ -388,9 +389,9 @@ not explicitly know that the features include z-dimension
 (elevation) data.  Thus, for example, running the Qgis2threejs plugin
 doesn't quite work as expected.  To work around this one can save the layer
 to a shapefile, for example to an ESRI Shapefile or a GeoPackage file.
-(In QGIS this usually results in the saved shapefile automatically
-being loaded as a new vector layer, or of course one can explicitly
-load the new shapefile.)  To ensure the z-dimension data is correctly
+In QGIS this usually results in the saved shapefile automatically
+being loaded as a new vector layer, but of course one can also explicitly
+load the new shapefile.  To ensure the z-dimension data is correctly
 incorporated when saving to a shapefile, in the 'Save as ...'  dialog
 make sure that the geometry type is specified (for legs this should be
 'LineString', and for stations it should be 'Point') and the 'Include
@@ -434,7 +435,7 @@ dump3d_dict = {'Linux' : '/usr/bin/dump3d',
                'Windows' : 'C:\Program Files (x86)\Survex\dump3d'}
 ```
 The keys here are the return values of a call to `platform.system()`.
-At the moment this dictionary lacks an entry for MAC OS X (eg
+At the moment this dictionary lacks an entry for MAC OS X (e.g.
 `'Darwin' : '...'`) but this will be fixed at some point.
 
 ###  Other import scripts
