@@ -1,4 +1,4 @@
-# QGIS survex .3d file import plugin
+# QGIS plugin to import survex .3d files
 
 This QGIS plugin provides a convenient route to import features (legs and
 stations) from a [survex](https://survex.com/ "survex.com")
