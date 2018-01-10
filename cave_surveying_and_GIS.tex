@@ -64,7 +64,7 @@
 
 \begin{document}
 
-\section{QGIS import plugin for survex .3d files}
+\section{Notes on cave surveying and GIS}
 
 \subsection{Summary}\label{summary}
 
@@ -459,13 +459,9 @@ ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf \
 
 The plugin provides a convenient route to import features (legs and
 stations) from a \verb}.3d} file, with \zdimension\ (elevation) and
-other metadata properly included.
-
-To install the plugin, clone or download this repository and copy the
-\verb}SurvexImport} directory into the QGIS python plugins directory,
-which is usually \verb}~/.qgis2/python/plugins} (where
-`\verb}~}' on Windows is probably
-\verb}C:\Users\<user>}).
+other metadata properly included.  Installation instructions can be
+found in the 
+\href{https://github.com/patrickbwarren/qgis-survex-import}{repository}.
 
 When installed, a menu item `Import .3d file' should appear on the
 `Vector' drop-down menu in the main QGIS window. Running this, a pop-up
@@ -517,44 +513,22 @@ by hand. To maximise the likelihood that CRS import works as expected,
 use an EPSG code in the \verb}*cs out} survex command rather than a
 PROJ.4 string.
 
-\paragraph{Platform-specific location of
-dump3d}\label{platform-specific-location-of-dump3d}
-
-The plugin uses \verb}dump3d} to dump the contents of the \verb}.3d}
-file to text, and obviously will fail if it can't find \verb}dump3d},
-or there is a survex version mismatch (most likely, by trying to import
-a \verb}.3d} file `from the future' with an older survex
-installation).
-
-If you have a non-standard survex installation you can edit
-\verb}survex_python.py} to add an entry for the platform-specific
-location of the \verb}dump3d} executable. The place to look is where a
-dictionary of platform-specific executables is defined:
-
-\begin{verbatim}
-dump3d_dict = {'Linux' : '/usr/bin/dump3d',
-     'Windows' : 'C:\Program Files (x86)\Survex\dump3d.exe'}
-\end{verbatim}
-
-The keys here are the return values of a call to
-\verb}platform.system()}. At the moment this dictionary lacks an entry
-for MAC OS X (\eg\ \verb+'Darwin' : '...'+)
-but this will be fixed at some point.
-
 \subsubsection{Other import scripts}\label{other-import-scripts}
 
-In the \verb}extra} directory, the script \verb}import3d.py} is a
+In the same
+\href{https://github.com/patrickbwarren/qgis-survex-import}{repository},
+under the \verb}extra} directory, the script \verb}import3d.py} is a
 stripped down version of the plugin which could be useful for testing
-and troubleshooting. It can be added as a user script to the Processing
-Toolbox.
+and troubleshooting. It can be added as a user script to the
+Processing Toolbox.
 
 Also in the \verb}extra} directory,
 \verb}survex_import_with_tmpfile.py} is a slightly old version of
 the main plugin script which uses a temporary file to cache the output
 of \verb}dump3d}.
 
-\subsection{Notes on georeferencing images, maps, and old
-surveys}\label{notes-on-georeferencing-images-maps-and-old-surveys}
+\subsection{Georeferencing images, maps, and old
+surveys}\label{georeferencing-images-maps-and-old-surveys}
 
 Georeferencing here refers to assigning a co-ordinate system to an image
 or map, or a scanned hard copy of a survey. The actual steps require
@@ -584,26 +558,11 @@ may help.
 
 These notes are licensed under a
 \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{Creative
-Commons Attribution-NonCommercial-ShareAlike 4.0 International License
-(CC BY-NC-SA 4.0)}. That is to say for the most part you are free to
-copy and use them in a non-commercial setting.
-
-Code in this repository is licensed under GLPv2:
-
-This program is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 2 of the License, or (at your
-option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program. If not, see \url{http://www.gnu.org/licenses/}.
-
-\subsubsection{Copyright}\label{copyright}
+  Commons Attribution-NonCommercial-ShareAlike 4.0 International
+  License (CC BY-NC-SA 4.0)}. That is to say for the most part you are
+free to copy and reproduce them in a non-commercial setting.  In any
+case you are certainly free to use the information content for any
+purpose.
 
 Copyright © (2017, 2018) Patrick B Warren.
 
