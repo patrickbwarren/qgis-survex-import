@@ -1,5 +1,7 @@
 # QGIS plugin to import survex .3d files
 
+_Requires QGIS &ge; 2.14 for QgsPointV2, and survex &ge; 1.2.14 to report CRS_
+
 This QGIS plugin provides a convenient route to import features (legs and
 stations) from a [survex](https://survex.com/ "survex.com")
 `.3d` file, with z-dimension (elevation) and other
@@ -19,7 +21,7 @@ directory into the QGIS python plugins directory, which is usually
 When installed, a menu item 'Import .3d file' should appear on the
 'Vector' drop-down menu in the main QGIS window.  Clicking on this, a
 pop-up window appears for the user to select a `.3d` file, and choose
-whether to import legs or stations , or both.  For the former (legs)
+whether to import legs or stations, or both.  For the former (legs)
 additional options allow the user to choose whether to include splay,
 duplicate, and surface legs.  For the latter (stations) the user can
 choose whether to include surface stations.  Finally there is an option
@@ -89,7 +91,7 @@ dump3d_dict = {'Linux' : '/usr/bin/dump3d',
 The keys here are the return values of a call to `platform.system()`.
 At the moment this dictionary lacks an entry for MAC OS X (e.g.
 `'Darwin' : '...'`) but this will be fixed at some point (or you can
-fix it yourself by running `which dump3d` in a Terminal).
+fix it yourself by finding the path: run `which dump3d` in a Terminal).
 
 ### Copying
 
