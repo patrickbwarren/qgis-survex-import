@@ -245,15 +245,17 @@ class SurvexImport:
 
     def add_leg_fields(self, layer):
         attrs = [QgsField(flag, QVariant.Int) for flag in self.leg_flags]
+        attrs.insert(0, QgsField('NAME', QVariant.String))
         layer.dataProvider().addAttributes(attrs)
         layer.updateFields() 
 
     # Add a leg into the legs layer, style is raided for the attributes
     
-    def add_leg(self, layer, xyz_start, xyz_end, style):
+    def add_leg(self, layer, xyz_start, xyz_end, name, style):
         if not layer: return
         xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
         attrs = [1 if flag in style else 0 for flag in self.leg_flags]
+        attrs.insert(0, name)
         linestring = QgsLineStringV2()
         linestring.setPoints(xyz_pair)
         feat = QgsFeature()
@@ -343,6 +345,8 @@ class SurvexImport:
             title, epsg = None, None
 
             # We run this like a gawk /pattern/ { action } script
+            
+            # The relevant layer is created when the first leg or station is encountered.
     
             for line in dump3d_out.splitlines():
 
@@ -360,6 +364,7 @@ class SurvexImport:
         
                 if include_legs and fields[0] == 'LINE': 
                     xyz_end = [float(v) for v in fields[1:4]]
+                    name = fields[4].strip('[]')
                     style = ' '.join(fields[5:])
                     if not leg_layer:
                         leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
@@ -368,7 +373,7 @@ class SurvexImport:
                         if exclude_surface_legs and 'SURFACE' in style: break
                         if exclude_splay_legs and 'SPLAY' in style: break
                         if exclude_duplicate_legs and 'DUPLICATE' in style: break
-                        self.add_leg(leg_layer, xyz_start, xyz_end, style)
+                        self.add_leg(leg_layer, xyz_start, xyz_end, name, style)
                         break
                     xyz_start = xyz_end
 
