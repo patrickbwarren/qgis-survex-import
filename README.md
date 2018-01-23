@@ -29,8 +29,8 @@ to import the CRS from the `.3d` file if possible.
 
 On clicking OK, vector layers are created to contain the legs and
 stations as desired.  The CRS is requested for each layer if not
-picked up from the file.  Some attributes are also imported (most
-usefully perhaps, names for stations).
+picked up from the file.  Some attributes are also imported (perhaps most
+usefully, names).
 
 There is one point to bear in mind.  Because of the (current)
 limitations in QGIS for creating vector layers in memory, the layer type does
