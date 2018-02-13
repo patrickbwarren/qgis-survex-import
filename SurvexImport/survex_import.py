@@ -329,7 +329,7 @@ class SurvexImport:
             if not os.path.exists(dump3d_exe):
                 raise Exception("Executable '%s' doesn't exist" % dump3d_exe)
 
-            p = Popen([dump3d_exe, survex3dfile], stdout=PIPE, stderr=PIPE)
+            p = Popen([dump3d_exe, survex3dfile], stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
             dump3d_out, dump3d_err = p.communicate()
 
