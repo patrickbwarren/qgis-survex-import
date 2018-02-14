@@ -61,6 +61,7 @@
 \newcommand{\latin}[1]{\emph{#1}}
 \newcommand{\ie}{\latin{i.\,e.}}
 \newcommand{\eg}{\latin{e.\,g.}}
+\newcommand{\etc}{\latin{etc}}
 
 \begin{document}
 
@@ -100,19 +101,19 @@ data. These formats specify:
 \begin{itemize}
 \tightlist
 \item
+  a co-ordinate reference system, and possible other metadata;
+\item
   geometries comprising points, lines, polylines (line strings), and
   polygons, with or without \zdimension\ (elevation) data;
 \item
   geometry attributes consisting of records of various kinds that are
-  user-configurable;
-\item
-  a co-ordinate reference system, and possible other metadata.
+  user-configurable.
 \end{itemize}
 
 At this point you are supposed to slap yourself on the head and ask
-why on earth we haven't been using GIS shapefiles for storing reduced
-survey data all along! The format is certainly flexible enough to
-contain all the information normally included in a \verb}.3d} file.
+why on earth we haven't been using a GIS-compatible format for storing
+reduced survey data all along!  It's certainly flexible enough
+to contain all the information normally included in a \verb}.3d} file.
 
 \subsection{Spatial Reference Systems}\label{spatial-reference-systems}
 
@@ -121,78 +122,85 @@ In order for this to work smoothly, we first have to be on top of our
 reference system (SRS)} in general GIS parlance, or co-ordinate
 reference system (CRS) in QGIS language. The following notes hopefully
 contain enough of the truth to be useful. Something closer to the truth
-can be found
-\href{http://www.bnhs.co.uk/focuson/grabagridref/html/OSGB.pdf}{here}.
+can be found in
+\href{https://www.ordnancesurvey.co.uk/docs/support/guide-coordinate-systems-great-britain.pdf}{{\it A guide to coordinate systems in 
+Great Britain}} by the Ordnance Survey (OS).
 
 An SRS usually comprises:
 
 \begin{itemize}
 \item
-  a \href{https://en.wikipedia.org/wiki/Geodetic_datum}{geodetic datum}
-  or reference ellipsoid which specifies the overall shape of the
-  earth's surface, \eg\ the
+  a \href{https://en.wikipedia.org/wiki/Geodetic_datum}{geodetic
+    datum} or Terrestrial Reference System, which is usually an
+  ellipsoid which specifies the overall shape of the earth's surface:
   \href{https://en.wikipedia.org/wiki/World_Geodetic_System}{WGS84}
-  datum used in GPS or the
+  used in GPS, and 
   \href{https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid}{OSGB36}
-  datum used by the Ordnance Survey (OS) in the UK;
+  used by the Ordnance Survey in the UK are two examples;
 \item
   a map projection which is nearly always a
   \href{https://en.wikipedia.org/wiki/Transverse_Mercator_projection}{Transverse
   Mercator} projection, such as the
   \href{https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system}{Universal
-  Transverse Mercator (UTM)} system used in GPS; the map projection
+  Transverse Mercator (UTM)} system used in GPS: the map projection
   tries to optimally flatten the curved surface of the earth (there is
   always some compromise involved here);
 \item
-  a co-ordinate system defined on top of the map projection, typically
-  specifying a `false origin' so that co-ordinates are always positive.
+  a co-ordinate system (typically metric) defined on top of the map
+  projection, usually specifying a `false origin' so that
+  co-ordinates are always positive.
 \end{itemize}
 
 Given the geodetic datum one can always work with latitudes and
 longitudes, but these aren't terribly convenient for cave survey data
 crunching. Also beware that the same point on the earth's surface may
-have a different latitude and longitude depending on the reference
-datum: this difference is known as a datum shift, and a well-known
-example is the
+have a different latitude and longitude according to the choice of
+datum: this is known as a datum shift, and a well-known example is the
 \href{https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid\#Datum_shift_between_OSGB_36_and_WGS_84}{datum
   shift between WGS84 and OSGB36} that nowadays only shows up in
 \href{http://www.natureonthemap.naturalengland.org.uk/MagicMap.aspx}{Magic
   Map}.
 
-The WGS84 datum is pretty much universally used nowadays on the internet,
-for example Google's
-\href{https://developers.google.com/kml/}{Keyhole Markup Language (KML)}
-only supports WGS84 latitude and longitude, to upload to
-\href{https://en.wikipedia.org/wiki/Google_Earth}{Google Earth}.
-Also most GPS devices report latitude and longitude for the WGS84
-datum, though more often than not you won't see this directly but
+WGS84 is pretty much universally used nowadays on the internet, for
+example Google's \href{https://developers.google.com/kml/}{Keyhole
+  Markup Language (KML)} only supports WGS84 latitude and longitude,
+to upload to \href{https://en.wikipedia.org/wiki/Google_Earth}{Google
+  Earth}.  Also most GPS devices report latitude and longitude for
+WGS84, though more often than not you won't see this directly but
 rather get metric UTM co-ordinates, or metric British National Grid
-co-ordinates.
+co-ordinates in the UK.
 
-To further add to the confusion, latitude and longitude can be reported
-in decimal degrees; or degrees, minutes, and seconds (or even degrees
-and decimal minutes). For example the entrance to Dow Cave is at NGR
-SD\,983{\small78}\,743{\small00} (see below), which translates to (WGS84)
-$54^\circ\,9'\,52.2''$\,N
-$2^\circ\,1'\,34.8''$\,W where one decimal place in the
-seconds corresponds to approximately 3\,m on the ground, or (WGS84)
-$54.16450^\circ$\,N $2.02634^\circ$\,W where five decimal places
-corresponds approximately to 1\,m on the ground. Online converters
-between British National Grid references and WGS84 latitudes and
-logitudes can be found on the internet by searching for `OSGB36 to WGS84
-converter'. To check things, the WGS84 latitude and longitude in decimal
-degrees can be copied and pasted into Google maps for example, or for
-that matter directly into the Google search engine.
+To further add to the confusion, latitude and longitude can be
+reported in decimal degrees; or degrees, minutes, and seconds (or even
+degrees and decimal minutes). For example the entrance to Dow Cave is
+at NGR SD\,983{\small78}\,743{\small00}, which translates to (WGS84)
+$54^\circ\,9'\,52.2''$\,N $2^\circ\,1'\,34.8''$\,W where one decimal
+place in the seconds corresponds to approximately 3\,m on the ground,
+or (WGS84) $54.16450^\circ$\,N $2.02634^\circ$\,W where five decimal
+places corresponds approximately to 1\,m on the ground, or (WGS84) 30U
+6\,002\,262\enskip563\,570 for UTM. Online converters between British
+National Grid references and WGS84 latitudes and logitudes can be
+found on the internet by searching for `OSGB36 to WGS84 converter'. To
+check things, the WGS84 latitude and longitude in decimal degrees can
+be copied and pasted into Google maps for example, or for that matter
+directly into the Google search engine.
+
+Note there is a confusing difference between WGS84
+\href{https://en.wikipedia.org/wiki/Web_Mercator}{Web Mercator} often
+used for online maps, and the standard conformal Mercator projection.
+For this reason the US DoD has declared the Web Mercator projection
+`to be unacceptable for any official use', which is a good enough
+reason for me to avoid where possible.
 
 In the UK, Ordnance Survey (OS)
 \href{https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid}{British
 National Grid} co-ordinates provide a metric SRS which is convenient for
 cave survey data. Typically one fixes cave entrances using the numeric
-part of the national grid reference (NGR). NGRs can be specified in two
+part of the national grid reference (NGR). The NGR can be specified in two
 ways. The most convenient way is to use the OS grid letter system in
 which a pair of letters specifies a
-$100\,\mathrm{km}\times100\,\mathrm{km}$ square. Then within
-that a 10-figure national grid reference (NGR) specifies a location to
+$100\,\mathrm{km}\times100\,\mathrm{km}$ square. Then, within
+that, a 10-figure national grid reference (NGR) specifies a location to
 within a square metre. This system (two letters plus 10 figures) is what
 is usually encountered when using a GPS device set to the British
 National Grid. Many datasets in the Cave Registry have entrance fixes
@@ -202,7 +210,7 @@ known.
 Alternatively, and more commonly in GIS, one can use an all-numeric
 12-figure NGR in which the leading figures signal the
 $100\,\mathrm{km}\times100\,\mathrm{km}$ 
-square numerically. For example as in the all-numeric scheme the
+square. For example in the all-numeric scheme the
 entrance to Dow Cave is at NGR\,{\small3}983{\small78}\,{\small4}743{\small00}.
 
 In the letter-based system the co-ordinates are often truncated to 8-fig
@@ -218,21 +226,20 @@ entrance is NGR SD\,983\,743.
 
 To check NGRs in the UK, one can use the `Where am I?' tool in the
 \href{http://www.natureonthemap.naturalengland.org.uk/MagicMap.aspx}{Magic
-Map} application. Note that unless explicitly set to use the WGS84
-datum, Magic Map reports latitude and longitude in the OSGB36 datum,
+Map} application. Note that unless explicitly set to use WGS84, Magic Map reports OSGB36 latitude and longitude,
 which as mentioned is offset from WGS84 by a datum shift of up to
 50--100\,m. Beware copying and pasting these OSGB36 latitudes and
 longitudes into Google Maps!
 
 Elsewhere in the world, or for that matter in the UK as well, the UTM
 system offers a convenient metric SRS for embedding cave survey data.
-Typically one fixes the entrance co-ordinates as the numeric part of the
-UTM position, making a note of the UTM grid zone. Online converters from
-WGS84 latitude and longitude to UTM or back are easily found. For
-example, the Dow Cave entrance in the UTM scheme is UTM (WGS84)
-30U 6\,002\,262\enskip563\,570. Perhaps it's restating the obvious but if you
-accidentally paste OSGB36 latitudes and longitudes into a UTM converter,
-you will likely be out by 50--100\,m.
+Typically one fixes the entrance co-ordinates as the numeric part of
+the UTM position, making a note of the UTM grid zone. Online
+converters from WGS84 latitude and longitude to UTM or back are easily
+found (thus, for example, the Dow Cave entrance above). Perhaps it's
+restating the obvious but if you accidentally paste OSGB36 latitudes
+and longitudes into a UTM converter, you will likely be out by
+50--100\,m.
 
 \subsection{Georeferencing cave survey
 data}\label{georeferencing-cave-survey-data}
@@ -251,7 +258,7 @@ the known geodetic SRS schemes (\ie\
 \href{https://en.wikipedia.org/wiki/Georeferencing}{\emph{georeferenced}}),
 then any feature in the cave will have a known position in GIS terms,
 and can thus be tied into any other georeferenced data such as maps,
-satellite imagery, digital elevation models, etc. Given that most cave
+satellite imagery, digital elevation models, \etc. Given that most cave
 surveying is done in metres, it is obviously convenient to tie into an
 SRS which uses metric co-ordinates, such as UTM or British National
 Grid. Note that once you've tied the dataset into a recognised SRS, any
@@ -296,7 +303,7 @@ and the master file \verb}DowProv.svx} contains
 
 \begin{verbatim}
 *cs OSGB:SD
-*cs out EPSG:27700
+*cs out EPSG:7405
 ...
 *begin DowProv
 *include DowCave
@@ -315,7 +322,7 @@ by field work. Then the file \verb}DowProv.svx} specifies input SRS is
 the SD square, and asks that the reduced data should be exported
 using the all-numeric British National Grid scheme, here codified with a
 \href{http://spatialreference.org/}{European Petroleum Survey Group
-  (EPSG)} code, here \verb+EPSG:27700+.
+  (EPSG)} code, here \verb+EPSG:7405+.
 Using EPSG numbers avoids potential misunderstanding when
 importing into a GIS platform, for example in QGIS one can find the
 exact exported SRS easily enough by searching on the EPSG number.
@@ -336,7 +343,7 @@ is robust, clean, and unambiguous. Moreover, the output SRS is included
 as metadata in the \verb}.3d} file; thus with \verb}dump3d} one sees
 
 \begin{verbatim}
-CS +init=epsg:27700 +no_defs
+CS +init=epsg:7405 +no_defs
 \end{verbatim}
 
 (this is in fact a \href{http://proj4.org/}{PROJ.4} string which species
@@ -399,9 +406,8 @@ commands. The \verb}DowProv.svx} master file thus also contains the
 lines (the first two are just comments)
 
 \begin{verbatim}
-; Mag dec calculated for SD 97480 72608
+; Mag dec calculated for SD 97480 72608 alt 225m
 ; Dowbergill Bridge, just above Kettlewell
-
 *declination auto 97480 72608 225
 \end{verbatim}
 
@@ -435,7 +441,7 @@ command line)
 
 \begin{verbatim}
 ogr2ogr -f "ESRI Shapefile" DowProv_centreline.shp DowProv.dxf \
-  -where "Layer='CentreLine'" -a_srs EPSG:27700
+  -where "Layer='CentreLine'" -a_srs EPSG:7405
 \end{verbatim}
 
 We take the opportunity here to add an SRS to match that used in the
@@ -452,7 +458,7 @@ running
 
 \begin{verbatim}
 ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf \
-  -where "Layer='Labels'" -a_srs EPSG:27700
+  -where "Layer='Labels'" -a_srs EPSG:7405
 \end{verbatim}
 
 \subsubsection{Import using QGIS plugin}\label{import-using-qgis-plugin}
@@ -461,57 +467,73 @@ The plugin provides a convenient route to import features (legs and
 stations) from a \verb}.3d} file, with \zdimension\ (elevation) and
 other metadata properly included.  Installation instructions can be
 found in the 
-\href{https://github.com/patrickbwarren/qgis-survex-import}{repository}.
+\href{https://github.com/patrickbwarren/qgis-survex-import}{README}.
 
 When installed, a menu item `Import .3d file' should appear on the
-`Vector' drop-down menu in the main QGIS window. Running this, a pop-up
-window appears for the user to select a \verb}.3d} file, and choose
-whether to import legs or stations , or both. For the former (legs)
-additional options allow the user to choose whether to include splay,
-duplicate, and surface legs. For the latter (stations) the user can
-chose whether to include surface stations. Finally there is an option to
-import the CRS from the \verb}.3d} file if possible (see below).
+`Vector' drop-down menu in the main QGIS window, and (possibly) a
+.3d icon in a toolbar (if enabled).
 
-On clicking OK, vector layers are created to contain the legs and
-stations as desired. The CRS is requested for each layer if not picked
-up from the file. Some attributes are also imported (most usefully
-perhaps, names for stations).
+Selecting `Import .3d file' (or clicking on the .3d icon) brings up a
+window for the user to select a \verb+.3d+ file, and choose whether to
+import legs or stations, or both.  For the former (legs) additional
+options allow the user to choose whether to include splay, duplicate,
+and surface legs.  For the latter (stations) the user can choose
+whether to include surface stations.  Finally there is an option to
+import the CRS from the \verb+.3d+ file if possible.  On clicking OK,
+vector layers are created to contain the legs and stations as desired.
+Some attributes are also imported (perhaps most usefully, names).
 
-There is one point to bear in mind. Because of the (current) limitations
-in QGIS for creating vector layers in memory, the layer type does not
-explicitly know that the features include \zdimension\ (elevation) data.
-Thus, for example, running the Qgis2threejs plugin doesn't quite work as
-expected. To work around this one can save the layer to a shapefile, for
-example to an ESRI Shapefile or a GeoPackage file. In QGIS this usually
-results in the saved shapefile automatically being loaded as a new
-vector layer, but of course one can also explicitly load the new shapefile.
-To ensure the \zdimension\ data is correctly incorporated when saving to
-a shapefile, in the `Save as \dots' dialog make sure that the
-geometry type is specified (for legs this should be `LineString', and
-for stations it should be `Point') and the `Include \zdimension' box is
-checked. The new vector layer created this way can then be used with
-Qgis2threejs for example.
+For the most part importing the CRS from the \verb+.3d+ file should work as
+expected if the survey data has been georeferenced using the survex
+\verb+*cs+ and \verb+*cs out+ commands.  If it doesn't, one can always uncheck
+this option and set the CRS by hand.  To maximise the likelihood that
+CRS import works as expected, use an EPSG code in the \verb+*cs out+ survex
+command rather than a PROJ.4 string.
 
-Regardless of the above, features (legs or stations) in the created
-layers can be coloured by depth to mimic the behaviour of the
-\verb}aven} viewer in survex (hat tip Julian Todd for figuring this
-out). The easiest way to do this is to use the \verb}.qml} style files
-provided in this repository. For example to colour legs by depth, open
-the properties dialog and under the `Style' tab, at the bottom select
-`Style $\rightarrow$ Load Style', then choose the
-\verb}color_legs_by_depth.qml} style file. This will apply a
-graduated colour scheme with an inverted spectral colour ramp. A small
-limitation is that the ranges are not automatically updated to match the
-vertical range of the current data set. Refreshing this is trivial:
-simply fiddle with the number of `Classes' (box on right hand side of
-`Style' tab) and the ranges will update to match the current dataset.
+There is one point to bear in mind regarding the elevation data.
+Because of the (current) limitations in QGIS for creating vector
+layers in memory, the layer type does not explicitly know that the
+features include \zdimension\ (elevation) data.  To work around this
+one can save the layer to a shapefile, for example to an ESRI
+Shapefile or a GeoPackage file.  In QGIS this usually results in the
+saved shapefile automatically being loaded as a new vector layer, but
+of course one can also explicitly load the new shapefile.  To ensure
+the \zdimension\ data is correctly incorporated when saving to a
+shapefile, in the `Save as \dots'  dialog make sure that the geometry
+type is specified (for legs this should be `LineString', and for
+stations it should be `Point') and the `Include z-dimension' box is
+checked.
 
-For the most part importing the CRS from the \verb}.3d} file should
-work as expected if the survey data has been georeferenced as suggested
-above. If it doesn't, one can always uncheck this option and set the CRS
-by hand. To maximise the likelihood that CRS import works as expected,
-use an EPSG code in the \verb}*cs out} survex command rather than a
-PROJ.4 string.
+Once the data is in QGIS one can do various things with it.  For
+example, regardless of the above comments about saving with
+\zdimension\ data, features (legs or stations) can be coloured by
+depth to mimic the behaviour of the \verb+aven+ viewer in survex (hat
+tip Julian Todd for figuring this out).  The easiest way to do this is
+to use the \verb+.qml+ style files provided in this repository.  For
+example to colour legs by depth, open the properties dialog and under
+the `Style' tab, at the bottom select `Style $\rightarrow$ Load
+Style', then choose the \verb}color_legs_by_depth.qml} style
+file. This will apply a graduated colour scheme with an inverted
+spectral colour ramp.  A small limitation is that the ranges are not
+automatically updated to match the vertical range of the current data
+set.  Refreshing this is trivial: simply fiddle with the number of
+`Classes' (box on right hand side of `Style' tab) and the ranges will
+update to match the current dataset.
+
+Another thing one can do is enable `map tips' using the \verb+NAME+ field.
+Then, hovering the mouse near a station (or leg) will show the name as a
+pop-up label.  Note that the relevant layer (\eg\ stations) does not
+have to be displayed for this to work (it has to be the active layer
+though).
+
+With a digital elevation model (DEM raster layer) one can use the
+`Raster Interpolation' plugin to find the surface elevation at all the
+imported stations (to do this, first create a field to hold the
+numerical result, then run the plugin).  Then, one can use the
+built-in field calculator to make another field containing the \emph{depth
+below surface}, as the surface elevation minus the \zdimension\ of the
+station, \verb+z($geometry)+.  This information can be displayed in the
+`map tip', \etc.
 
 \subsubsection{Other import scripts}\label{other-import-scripts}
 
@@ -536,17 +558,7 @@ identifying so-called Ground Control Points (GCPs), which are
 identifiable features on the map for which actual co-ordinates are
 known. One way to do this is to use the
 \href{https://docs.qgis.org/2.8/en/docs/user_manual/plugins/plugins_georeferencer.html}{GDAL
-Georeferencer} plugin in QGIS. Then, a useful way to extract
-co-ordinates for GCPs can be to install the
-\href{https://plugins.qgis.org/plugins/openlayers_plugin/}{OpenLayers}
-plugin which allows one to pull down data from Open Street Map, Google
-Maps, and so on. In particular, one can pull down satellite imagery into
-QGIS and use the option to set the GCP co-ordinates from the QGIS main
-window. Georeferencing then becomes quick and easy, for example finding
-2--3 wall corners or other features on the image, and set their
-co-ordinates by simply clicking on the same features in the main window
-(make sure the SRS in the main window is set to what you want though).
-
+Georeferencer} plugin in QGIS.
 Georeferencing surveys may be easier if there is more than one entrance
 and the positions are known, or there is already a surface grid. If
 there is only one entrance then tracing a centerline in Inkscape and
@@ -556,14 +568,10 @@ may help.
 
 \subsubsection{Copying}\label{copying}
 
+Copyright © (2017, 2018) Patrick B Warren.
 These notes are licensed under a
 \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{Creative
   Commons Attribution-NonCommercial-ShareAlike 4.0 International
-  License (CC BY-NC-SA 4.0)}. That is to say for the most part you are
-free to copy and reproduce them in a non-commercial setting.  In any
-case you are certainly free to use the information content for any
-purpose.
-
-Copyright © (2017, 2018) Patrick B Warren.
+  License (CC BY-NC-SA 4.0)}.
 
 \end{document}

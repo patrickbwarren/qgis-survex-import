@@ -1,6 +1,8 @@
-; Title: Dow Cave - Providence Pot system, including Dowbergill Passage
+; Dow Cave - Providence Pot system, including Dowbergill Passage
 
-; created 27/10/2015 by Patrick Warren (PBW) from an original by Steve Warren
+; Created 27/10/2015 by Patrick Warren (PBW) from an original by Steve Warren
+
+; Surveyed 1982 (Dow Cave) -- 2015 (Dowbergill upstream of 800 yds chamber)
 
 ; Historically Providence Pot was classed as from the entrance to Stalagmite
 ; Corner, and the rest was classed as Dowbergill Passage (or Dowber Gill
@@ -10,18 +12,14 @@
 ; chamber, where the WRPC re-survey ended in 2004.
  
 ; Magnetic declinations in individual files were originally calculated
-; using the International Geomagnetic Reference Field (IGRF) model, with
-; the online NOAA magnetic declination calculator, for the location
-; (WGS84) 54.14929 N, 2.04008 W (Dowbergill Bridge, just above Kettlewell)
-; OSGB36 Grid ref: SD 97480 72608  Grid Ref = SD974726
-; Location : (OSGB36) Easting = 397480 Northing = 472605
-; altitude 225m ODN estimated from spot height on road (Magic Map)
-; All these declinations are now commented out, as this method is depracated
-; in favour of using the *declination auto command in survex.  However
-; it has been verified that both methods generate the exact same
-; reduced survey data.
-
-; Dates 1982 (Dow Cave) -- 2015 (Dowbergill upstream of 800 yds chamber)
+; using the International Geomagnetic Reference Field (IGRF) model,
+; with the online NOAA magnetic declination calculator, for the
+; location (WGS84) 54.14929 N, 2.04008 W corresponding to SD 97480
+; 72608 (Dowbergill Bridge, just above Kettlewell).  All these
+; declinations are now commented out, as this method is deprecated in
+; favour of using the *declination auto command below.  However it has
+; been verified that both methods generate the exact same reduced
+; survey data.
 
 ; People involved (in alphabetical order):
 ; Steve Barwick, Howard Beck, Simon Beck, David Bradley, Andy Cole,
@@ -34,24 +32,21 @@
 ; Red Rose Cave and Pothole Club (RRCPC)
 ; White Rose Pothole Club (WRPC)
 
-; Input CRS *fixes are georeferenced to the SW corner of the
-; Ordnance Survey SD grid square, ie SD 000 000.
+; Input CRS *fixes are NGR references, relative to the SW corner of
+; the Ordnance Survey SD grid square, ie SD 000 000.
 
-; Output CRS is OSGB 1936 / British National Grid (EPSG:27700)
+; Output CRS is OSGB 1936 / British National Grid (EPSG:7405)
 
 *cs OSGB:SD
-*cs out EPSG:27700
+*cs out EPSG:7405
 
 ; *cs out EPSG:3042 ; WGS84 UTM zone 30N (includes zone 30U)
 
-; Mag dec calculated for SD 97480 72608
+; Mag dec calculated for SD 97480 72608 alt 225m
 ; Dowbergill Bridge, just above Kettlewell
-
 *declination auto 97480 72608 225
 
 *title DowProv
-
-*begin DowProv
 
 *include DowCave
 *include Dowbergill1
@@ -65,5 +60,3 @@
 *flags surface
 *include HagDyke ; surface feature -- building
 *flags not surface
-
-*end DowProv

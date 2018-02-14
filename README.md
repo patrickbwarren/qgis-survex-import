@@ -1,6 +1,6 @@
 # QGIS plugin to import survex .3d files
 
-_Requires QGIS &ge; 2.14 for QgsPointV2, and survex &ge; 1.2.14 to report CRS_
+_Requires QGIS &ge; 2.14 for QgsPointV2, and probably survex &ge; 1.2.14 to report CRS_
 
 This QGIS plugin provides a convenient route to import features (legs and
 stations) from a [survex](https://survex.com/ "survex.com")
@@ -19,45 +19,18 @@ directory into the QGIS python plugins directory, which is usually
   is checked.
 
 When installed, a menu item 'Import .3d file' should appear on the
-'Vector' drop-down menu in the main QGIS window.  Clicking on this, a
-pop-up window appears for the user to select a `.3d` file, and choose
-whether to import legs or stations, or both.  For the former (legs)
-additional options allow the user to choose whether to include splay,
-duplicate, and surface legs.  For the latter (stations) the user can
-choose whether to include surface stations.  Finally there is an option
-to import the CRS from the `.3d` file if possible.
+'Vector' drop-down menu in the main QGIS window, and (possibly) a
+`.3d` icon in a toolbar (if enabled).
 
-On clicking OK, vector layers are created to contain the legs and
-stations as desired.  The CRS is requested for each layer if not
-picked up from the file.  Some attributes are also imported (perhaps most
-usefully, names).
-
-There is one point to bear in mind.  Because of the (current)
-limitations in QGIS for creating vector layers in memory, the layer type does
-not explicitly know that the features include z-dimension
-(elevation) data.  To work around this one can save the layer
-to a shapefile, for example to an ESRI Shapefile or a GeoPackage file.
-In QGIS this usually results in the saved shapefile automatically
-being loaded as a new vector layer, but of course one can also explicitly
-load the new shapefile.  To ensure the z-dimension data is correctly
-incorporated when saving to a shapefile, in the 'Save as ...'  dialog
-make sure that the geometry type is specified (for legs this should be
-'LineString', and for stations it should be 'Point') and the 'Include
-z-dimension' box is checked.
-
-Regardless of the above, features (legs or stations) in the created
-layers can be coloured by depth to mimic the behaviour of the `aven`
-viewer in survex (hat tip Julian Todd for figuring this out).  The
-easiest way to do this is to use the `.qml` style files provided in
-this repository.  For example to colour legs by depth, open the
-properties dialog and under the 'Style' tab, at the bottom select
-'Style --> Load Style', then choose the `color_legs_by_depth.qml`
-style file.  This will apply a graduated colour scheme with an
-inverted spectral colour ramp.  A small limitation is that the ranges
-are not automatically updated to match the vertical range of the
-current data set.  Refreshing this is trivial: simply fiddle with the
-number of 'Classes' (box on right hand side of 'Style' tab) and the ranges
-will update to match the current dataset.
+Selecting 'Import .3d file' (or clicking on the .3d icon) brings up a
+window for the user to select a `.3d` file, and choose whether to
+import legs or stations, or both.  For the former (legs) additional
+options allow the user to choose whether to include splay, duplicate,
+and surface legs.  For the latter (stations) the user can choose
+whether to include surface stations.  Finally there is an option to
+import the CRS from the `.3d` file if possible.  On clicking OK,
+vector layers are created to contain the legs and stations as desired.
+Some attributes are also imported (perhaps most usefully, names).
 
 For the most part importing the CRS from the `.3d` file should work as
 expected if the survey data has been georeferenced using the survex
@@ -66,18 +39,63 @@ this option and set the CRS by hand.  To maximise the likelihood that
 CRS import works as expected, use an EPSG code in the `*cs out` survex
 command rather than a PROJ.4 string.
 
-Further notes on cave surveying and GIS are in 
-[`cave_surveying_and_GIS.pdf`](cave_surveying_and_GIS.pdf).
+There is one point to bear in mind regarding the elevation data.
+Because of the (current) limitations in QGIS for creating vector
+layers in memory, the layer type does not explicitly know that the
+features include z-dimension (elevation) data.  To work around this
+one can save the layer to a shapefile, for example to an ESRI
+Shapefile or a GeoPackage file.  In QGIS this usually results in the
+saved shapefile automatically being loaded as a new vector layer, but
+of course one can also explicitly load the new shapefile.  To ensure
+the z-dimension data is correctly incorporated when saving to a
+shapefile, in the 'Save as ...'  dialog make sure that the geometry
+type is specified (for legs this should be 'LineString', and for
+stations it should be 'Point') and the 'Include z-dimension' box is
+checked.
+
+Once the data is in QGIS one can do various things with it.  For
+example, regardless of the above comments about saving with
+z-dimension data, features (legs or stations) can be coloured by depth
+to mimic the behaviour of the `aven` viewer in survex (hat tip Julian
+Todd for figuring this out).  The easiest way to do this is to use the
+`.qml` style files provided in this repository.  For example to colour
+legs by depth, open the properties dialog and under the 'Style' tab,
+at the bottom select 'Style --> Load Style', then choose the
+`color_legs_by_depth.qml` style file.  This will apply a graduated
+colour scheme with an inverted spectral colour ramp.  A small
+limitation is that the ranges are not automatically updated to match
+the vertical range of the current data set.  Refreshing this is
+trivial: simply fiddle with the number of 'Classes' (box on right hand
+side of 'Style' tab) and the ranges will update to match the current
+dataset.
+
+Another thing one can do is enable 'map tips' using the NAME field.
+Then, hovering the mouse near a station (or leg) will show the name as a
+pop-up label.  Note that the relevant layer (e.g. stations) does not
+have to be displayed for this to work (it has to be the active layer
+though).
+
+With a digital elevation model (DEM raster layer) one can use the
+'Raster Interpolation' plugin to find the surface elevation at all the
+imported stations (to do this, first create a field to hold the
+numerical result, then run the plugin).  Then, one can use the
+built-in field calculator to make another field containing the _depth
+below surface_, as the surface elevation minus the z-dimension of the
+station, `z($geometry)`.  This information can be displayed in the
+'map tip', etc.
 
 Sample georeferenced survey data can be found in
 [`DowProv.3d`](DowProv/DowProv.3d).
 
+Further notes on cave surveying and GIS are in 
+[`cave_surveying_and_GIS.pdf`](cave_surveying_and_GIS.pdf).
+
 #### Platform-specific location of dump3d
 
-The plugin uses `dump3d` to read the contents of the `.3d` file, and
-obviously will fail if it can't find `dump3d`, or there is a survex
-version mismatch (most likely, by trying to import a `.3d` file 'from
-the future' with an older survex installation).
+Currently (but see below) the plugin uses `dump3d` to read the contents of
+the `.3d` file, and obviously will fail if it can't find `dump3d`, or
+there is a survex version mismatch (most likely, by trying to import a
+`.3d` file 'from the future' with an older survex installation).
 
 If you have a non-standard survex installation you can edit
 `survex_python.py` to add an entry for the platform-specific location
@@ -90,8 +108,35 @@ dump3d_dict = {'Linux' : '/usr/bin/dump3d',
 
 The keys here are the return values of a call to `platform.system()`.
 At the moment this dictionary lacks an entry for MAC OS X (e.g.
-`'Darwin' : '...'`) but this will be fixed at some point (or you can
-fix it yourself by finding the path: run `which dump3d` in a Terminal).
+`'Darwin' : '...'`).
+
+### Roadmap
+
+The immediate plan (Feb 2018) is to refactor the code to read the
+(binary) `.3d` file directly rather than relying on `dump3d`, thus
+eliminating this explicit survex dependency.  This will facilitate
+submitting the plugin to be included in the official QGIS plugin list.
+
+There is unused metadata in the `.3d` file format
+(not necessarily exposed using `dump3d`).  Therefore a slightly
+longer term plan is:
+
+* import dates as attributes (fields); 
+* import closure errors as attributes (fields); 
+* import LRUD as attributes (fields).
+
+From the LRUD data one might try to build a polygon layer.  At present
+it seems to me this might best be done by a 'downstream' QGIS
+processing script, rather than adding to the functionality of the
+`.3d` plugin (the principle being to focus on importing the basic data
+into QGIS, then use QGIS to make derived features and
+attributes).
+
+Finally, as this is aimed squarely at importing survex `.3d`
+files, I have no plans to extend _this_ plugin to other cave survey
+data formats which would be better served by _separate_ plugins (at
+least, it seems that way to me!).  If developing these, of course feel
+free to re-use any of the present code under the GPL terms.
 
 ### Copying
 
