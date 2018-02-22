@@ -11,9 +11,6 @@
         email                : patrickbwarren@gmail.com
  ***************************************************************************/
 
-File parser based on a library to handle Survex 3D files (*.3d) 
-Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -32,11 +29,10 @@ from survex_import_dialog import SurvexImportDialog
 import os.path
 
 from qgis.core import *
-from PyQt4.QtCore import QVariant, QDate
+from PyQt4.QtCore import QVariant
 
 from osgeo.osr import SpatialReference
 
-from struct import unpack
 from os import unlink
 from re import search
 from tempfile import NamedTemporaryFile
@@ -207,6 +203,7 @@ class SurvexImport:
     # << perfection is achieved not when nothing more can be added 
     #      but when nothing more can be taken away >>
 
+    # Extract EPSG number from PROJ.4 string from 3d file using GDAL tools.
     # First try to match an explicit EPSG number, and check this is recognised.
     # If this fails, try to match the entire PROJ.4 string.  The reason for 
     # this somewhat convoluted route is to ensure if there is an EPSG number
@@ -214,7 +211,6 @@ class SurvexImport:
     # into another EPSG number with ostensibly the same CRS.
 
     def extract_epsg(self, proj4string):
-        """Extract EPSG number from PROJ.4 string using GDAL tools"""
         srs = SpatialReference()
         epsg_match = search('epsg:([0-9]*)', proj4string)
         if epsg_match:
@@ -229,11 +225,11 @@ class SurvexImport:
                                  tag='Import .3d', level=QgsMessageLog.INFO)
         return epsg
 
+    # Add a memory layer with title and geom 'Point' or 'LineString'
     # Note that 'PointZ' and 'LineStringZ' are not possible in QGIS 2.18
     # However the z-dimension data is respected.
 
     def add_layer(self, title, subtitle, geom, epsg):
-        """Add a memory layer with title and geom 'Point' or 'LineString'"""
         uri = '%s?crs=epsg:%i' % (geom, epsg) if epsg else geom
         name = '%s - %s' % (title, subtitle) if title else subtitle
         layer =  QgsVectorLayer(uri, name, 'memory')
@@ -243,30 +239,22 @@ class SurvexImport:
                                  tag='Import .3d', level=QgsMessageLog.INFO)
         return layer
 
-    leg_attrs = {0x01 : 'SURFACE',
-                 0x02 : 'DUPLICATE',
-                 0x04 : 'SPLAY'}
+    # Add attributes (fields) for legs
 
-    leg_flags = sorted(leg_attrs.keys())
+    leg_flags = ['DUPLICATE', 'SPLAY', 'SURFACE']
 
-    # Attributes are inserted like pushing onto a stack, so in reverse order
-    
     def add_leg_fields(self, layer):
-        """Add attributes (fields) for legs"""
-        attrs = [QgsField(self.leg_attrs[k], QVariant.Int) for k in self.leg_flags]
-        attrs.insert(0, QgsField('DATE2', QVariant.Date))
-        attrs.insert(0, QgsField('DATE1', QVariant.Date))
+        attrs = [QgsField(flag, QVariant.Int) for flag in self.leg_flags]
         attrs.insert(0, QgsField('NAME', QVariant.String))
         layer.dataProvider().addAttributes(attrs)
         layer.updateFields() 
+
+    # Add a leg into the legs layer, style is raided for the attributes
     
-    def add_leg(self, layer, xyz_start, xyz_end, name, date_from, date_to, flag):
-        """Add a leg into the legs layer, flag is raided for the attributes"""
+    def add_leg(self, layer, xyz_start, xyz_end, name, style):
         if not layer: return
         xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
-        attrs = [1 if flag & k else 0 for k in self.leg_flags]
-        attrs.insert(0, date_to)
-        attrs.insert(0, date_from)
+        attrs = [1 if flag in style else 0 for flag in self.leg_flags]
         attrs.insert(0, name)
         linestring = QgsLineStringV2()
         linestring.setPoints(xyz_pair)
@@ -275,57 +263,28 @@ class SurvexImport:
         feat.setGeometry(geom) 
         feat.setAttributes(attrs)
         layer.dataProvider().addFeatures([feat])
-        
-    station_attrs = {0x01 : 'SURFACE',
-                     0x02 : 'UNDERGROUND',
-                     0x04 : 'ENTRANCE',
-                     0x08 : 'EXPORTED',
-                     0x10 : 'FIXED',
-                     0x20 : 'ANON'}
 
-    station_flags = sorted(station_attrs.keys())
-    
+    # Add attributes (fields) for stations
+
+    station_flags = ['SURFACE', 'EXPORTED', 'FIXED', 'ENTRANCE']
+        
     def add_station_fields(self, layer):
-        """Add attributes (fields) for stations"""
-        attrs = [QgsField(self.station_attrs[k], QVariant.Int) for k in self.station_flags]
+        attrs = [QgsField(flag, QVariant.Int) for flag in self.station_flags]
         attrs.insert(0, QgsField('NAME', QVariant.String))
         layer.dataProvider().addAttributes(attrs)
         layer.updateFields() 
 
-    def add_station(self, layer, xyz, name, flag):
-        """Add a station into the stations layer, using flags as attributes"""
+    # Add a station into the stations layer, using flags as attributes 
+
+    def add_station(self, layer, xyz, name, flags):
         if not layer: return
-        attrs = [1 if flag & k else 0 for k in self.station_flags]
+        attrs = [1 if flag in flags else 0 for flag in self.station_flags]
         attrs.insert(0, name)
         feat = QgsFeature()
         geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
         feat.setGeometry(geom)
         feat.setAttributes(attrs)
         layer.dataProvider().addFeatures([feat])
-
-    def read_xyz(self, fp):
-        """Read xyz as signed integers according to .3d spec""" 
-        return unpack('<iii', fp.read(12))
-        
-    def read_len(self, fp):
-        """Read a number as a length according to .3d spec"""
-        byte = ord(fp.read(1))
-        if byte != 0xff:
-            return byte
-        else:
-            return unpack('<I', fp.read(4))[0]
-
-    def read_label(self, fp, current_label):
-        """Read a string as a label, or part thereof, according to .3d spec"""
-        byte = ord(fp.read(1))
-        if byte != 0x00:
-            ndel = byte >> 4
-            nadd = byte & 0x0f
-        else:
-            ndel = self.read_len(fp)
-            nadd = self.read_len(fp)
-        oldlen = len(current_label)
-        return current_label[:oldlen - ndel] + fp.read(nadd).decode('ascii')
 
     def run(self):
         """Run method that performs all the real work"""
@@ -351,152 +310,86 @@ class SurvexImport:
 
             get_crs = self.dlg.checkGetCRS.isChecked()
 
-            title, epsg = None, None
-
             if not os.path.exists(survex3dfile):
                 raise Exception("File '%s' doesn't exist" % survex3dfile)
 
-            # Read .3d file as binary
+            # Run dump3d and slurp the output (note currently stderr is unused)
+            # First, try to figure out where the executable is.
 
-            with open(survex3dfile, 'rb') as fp:
+            # TO BE DONE: for MAC OS X add 'Darwin' : '...' option in here...
+
+            dump3d_dict = {'Linux' : '/usr/bin/dump3d',
+                           'Windows' : 'C:\Program Files (x86)\Survex\dump3d.exe'}
+
+            try:
+                dump3d_exe = dump3d_dict[platform.system()]
+            except KeyError:
+                raise Exception("Unrecognised system '%s'" % platform.system())
+
+            if not os.path.exists(dump3d_exe):
+                raise Exception("Executable '%s' doesn't exist" % dump3d_exe)
+
+            p = Popen([dump3d_exe, survex3dfile], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+
+            dump3d_out, dump3d_err = p.communicate()
+
+            if p.returncode:
+                for line in dump3d_out.splitlines():
+                    QgsMessageLog.logMessage(line, tag='Import .3d', level=QgsMessageLog.CRITICAL)
+                raise Exception("dump3d failed, see log for details")
+
+            # Now parse the dump3d output
     
-                line = fp.readline().rstrip() # File ID check
-                
-                if not line.startswith(b'Survex 3D Image File'):
-                    raise IOError('Not a Survex 3D File: ' + survex3dfile)
+            leg_layer, station_layer = None, None
+            
+            title, epsg = None, None
 
-                line = fp.readline().rstrip() # File format version
-                
-                if not line.startswith(b'v'):
-                    raise IOError('Unrecognised .3d version: ' + survex3dfile)
-                
-                version = int(line[1:])
-                if version < 8:
-                    raise IOError('Version >= 8 required: ' + survex3dfile)
+            # We run this like a gawk /pattern/ { action } script
+            
+            # The relevant layer is created when the first leg or station is encountered.
+    
+            for line in dump3d_out.splitlines():
 
-                line = fp.readline().rstrip() # Metadata (title and coordinate system)
-                
-                title, proj4string = [s.decode('utf-8') for s in line.split(b'\x00')]
-                
-                if get_crs:
+                fields = line.split()
+            
+                if fields[0] == 'TITLE':
+                    title = ' '.join(fields[1:]).strip('"')
+
+                if get_crs and fields[0] == 'CS':
+                    proj4string = ' '.join(fields[1:])
                     epsg = self.extract_epsg(proj4string)
 
-                line = fp.readline().rstrip() # Timestamp
+                if fields[0] == 'MOVE':
+                    xyz_start = [float(v) for v in fields[1:4]]
+        
+                if include_legs and fields[0] == 'LINE': 
+                    xyz_end = [float(v) for v in fields[1:4]]
+                    name = fields[4].strip('[]')
+                    style = ' '.join(fields[5:])
+                    if not leg_layer:
+                        leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
+                        self.add_leg_fields(leg_layer)
+                    while (True):
+                        if exclude_surface_legs and 'SURFACE' in style: break
+                        if exclude_splay_legs and 'SPLAY' in style: break
+                        if exclude_duplicate_legs and 'DUPLICATE' in style: break
+                        self.add_leg(leg_layer, xyz_start, xyz_end, name, style)
+                        break
+                    xyz_start = xyz_end
+
+                if include_stations and fields[0] == 'NODE':
+                    xyz = [float(v) for v in fields[1:4]]
+                    name = fields[4].strip('[]')
+                    flags = ' '.join(fields[5:])
+                    if not station_layer:
+                        station_layer = self.add_layer(title, 'stations', 'Point', epsg)
+                        self.add_station_fields(station_layer)
+                    while (True):
+                        if exclude_surface_stations and 'SURFACE' in flags: break
+                        self.add_station(station_layer, xyz, name, flags)
+                        break
                 
-                if not line.startswith(b'@'):
-                    raise IOError('Unrecognised timestamp: ' + survex3dfile)
-                
-                timestamp = int(line[1:]) # Saved, but not used
 
-                # System-wide flags
-
-                flag = ord(fp.read(1))
-
-                if flag & 0x80:
-                    raise IOError('Flagged as extended elevation: ' + survex3dfile)
-
-                # All front-end data read in, now read byte-wise
-                # according to .3d spec.  Note that all elements must
-                # be processed, in order, otherwise we get out of sync
-    
-                label = ''
-                day_zero = QDate(1900, 1, 1)
-                date1 = date2 = day_zero
-                current_style = 0xff
-                leg_layer, station_layer = None, None
-            
-                while True:
-
-                    char = fp.read(1)
-
-                    if not char: # End of file reached (prematurely?)
-                        raise IOError('Premature end of file: ' + survex3dfile)
-
-                    byte = ord(char)
-
-                    if byte <= 0x05: # STYLE
-                        if byte == 0x00 and current_style == 0x00: # this signals end of data
-                            break # escape from byte-gobbling while loop
-                        else:
-                            current_style = byte
-                
-                    elif byte <= 0x0e: # Reserved
-                        continue
-        
-                    elif byte == 0x0f: # MOVE
-                        xyz = [0.01*v for v in self.read_xyz(fp)]
-
-                    elif byte == 0x10: # DATE (none)
-                        date1 = date2 = day_zero
-                                    
-                    elif byte == 0x11: # DATE (single date)
-                        days = unpack('<H', fp.read(2))[0]
-                        date1 = date2 = day_zero.addDays(days)
-            
-                    elif byte == 0x12:  # DATE (date range, short format)
-                        days, extra = unpack('<HB', fp.read(3))
-                        date1 = day_zero.addDays(days)
-                        date2 = day_zero.addDays(days + extra + 1)
-
-                    elif byte == 0x13: # DATE (date range, long format)
-                        days1, days2 = unpack('<HH', fp.read(4)) 
-                        date1 = day_zero.addDays(days1)
-                        date2 = day_zero.addDays(days2)
-
-                    elif byte <= 0x1e: # Reserved
-                        continue
-        
-                    elif byte == 0x1f:  # Error info -- not currently captured
-                        nlehv = unpack('<iiiii', fp.read(20))
-            
-                    elif byte <= 0x2f: # Reserved
-                        continue
-        
-                    elif byte <= 0x31: # XSECT (short format) -- not currently captured
-                        label = self.read_label(fp, label)
-                        lrud = unpack('<hhhh', fp.read(8))
-            
-                    elif byte <= 0x33: # XSECT (long format) -- not currently captured
-                        label = self.read_label(fp, label)
-                        lrud = unpack('<iiii', fp.read(16))
-            
-                    elif byte <= 0x3f: # Reserved
-                        continue
-        
-                    elif byte <= 0x7f: # LINE
-                        flag = byte & 0x3f
-                        if not (flag & 0x20):
-                            label = self.read_label(fp, label)
-                        xyz_prev = xyz
-                        xyz = [0.01*v for v in self.read_xyz(fp)]
-                        if include_legs:
-                            if not leg_layer:
-                                leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
-                                self.add_leg_fields(leg_layer)
-                            while (True):
-                                if exclude_surface_legs and flag & 0x01: break
-                                if exclude_duplicate_legs and flag & 0x02: break
-                                if exclude_splay_legs and flag & 0x03: break
-                                self.add_leg(leg_layer, xyz_prev, xyz, label, date1, date2, flag)
-                                break
-
-                    elif byte <= 0xff: # LABEL (or NODE)
-                        flag = byte & 0x7f
-                        label = self.read_label(fp, label)
-                        xyz = [0.01*v for v in self.read_xyz(fp)]
-                        if include_stations:
-                            if not station_layer:
-                                station_layer = self.add_layer(title, 'stations', 'Point', epsg)
-                                self.add_station_fields(station_layer)
-                            while (True):
-                                if exclude_surface_stations and flag & 0x01 and not flag & 0x02: break
-                                self.add_station(station_layer, xyz, label, flag)
-                                break
-
-                # End of byte-gobbling infinite while loop
-
-            # file closes automatically, with open(survex3dfile, 'rb') as fp:
-        
             if leg_layer:
                 leg_layer.updateExtents() 
                 QgsMapLayerRegistry.instance().addMapLayers([leg_layer])
