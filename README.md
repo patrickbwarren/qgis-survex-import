@@ -1,6 +1,8 @@
 # QGIS plugin to import survex .3d files
 
-_Requires QGIS &ge; 2.14 for QgsPointV2, and probably survex &ge; 1.2.14 to report CRS_
+_Requires QGIS &ge; 2.14 for QgsPointV2, and files processed typically by survex &ge; 1.2.14 to report CRS._
+
+_The current version reads .3d files directly and doesn't require survex to be installed to load data._
 
 This QGIS plugin provides a convenient route to import features (legs and
 stations) from a [survex](https://survex.com/ "survex.com")
@@ -14,7 +16,7 @@ directory into the QGIS python plugins directory, which is usually
 `~/.qgis2/python/plugins` (where `~` on Windows is probably
 `C:\Users\<user>`);
 
-* run QGIS and enable the plugin by going to 'Plugins --> Manage and
+* run QGIS and enable the plugin by going to 'Plugins &rarr; Manage and
   Install Plugins...' and make sure the box next to 'Import .3d file'
   is checked.
 
@@ -27,10 +29,22 @@ window for the user to select a `.3d` file, and choose whether to
 import legs or stations, or both.  For the former (legs) additional
 options allow the user to choose whether to include splay, duplicate,
 and surface legs.  For the latter (stations) the user can choose
-whether to include surface stations.  Finally there is an option to
+whether to include surface stations (in rare cases a station may be
+flagged both surface and underground, in which case it is imported
+even if this option is left unchecked).  Finally there is an option to
 import the CRS from the `.3d` file if possible.  On clicking OK,
 vector layers are created to contain the legs and stations as desired.
-Some attributes are also imported (perhaps most usefully, names).
+
+Attribute fields that are created are:
+
+* stations: NAME, and flags SURFACE, UNDERGROUND, ENTRANCE, EXPORTED, FIXED, ANON
+
+* legs: NAME, STYLE, DATE1 and DATE2, and flags SURFACE, DUPLICATE, SPLAY
+
+The flag fields are integer fields set to 0 or 1.  For the leg data,
+the style is one of NORMAL, DIVING, CARTESIAN, CYLPOLAR, or NOSURVEY,
+and the date fields are either the same, or represent a date range, in
+the standard QGIS format YYYY-MM-DD.
 
 For the most part importing the CRS from the `.3d` file should work as
 expected if the survey data has been georeferenced using the survex
@@ -53,14 +67,15 @@ type is specified (for legs this should be 'LineString', and for
 stations it should be 'Point') and the 'Include z-dimension' box is
 checked.
 
-Once the data is in QGIS one can do various things with it.  For
-example, regardless of the above comments about saving with
+Once the data is in QGIS one can do various things with it.
+
+For example, regardless of the above comments about saving with
 z-dimension data, features (legs or stations) can be coloured by depth
 to mimic the behaviour of the `aven` viewer in survex (hat tip Julian
 Todd for figuring this out).  The easiest way to do this is to use the
 `.qml` style files provided in this repository.  For example to colour
 legs by depth, open the properties dialog and under the 'Style' tab,
-at the bottom select 'Style --> Load Style', then choose the
+at the bottom select 'Style &rarr; Load Style', then choose the
 `color_legs_by_depth.qml` style file.  This will apply a graduated
 colour scheme with an inverted spectral colour ramp.  A small
 limitation is that the ranges are not automatically updated to match
@@ -69,11 +84,18 @@ trivial: simply fiddle with the number of 'Classes' (box on right hand
 side of 'Style' tab) and the ranges will update to match the current
 dataset.
 
-Another thing one can do is enable 'map tips' using the NAME field.
-Then, hovering the mouse near a station (or leg) will show the name as a
-pop-up label.  Note that the relevant layer (e.g. stations) does not
-have to be displayed for this to work (it has to be the active layer
-though).
+Colour legs by date is possible using an expression like
+`day(age("DATE1",'1970-01-01'))` (which gives the number of days
+between the recorded DATE1 and the given date), with a graduated style
+colouring scheme.
+
+Another thing one can do is enable 'map tips', for example to use the
+NAME field.  Then, hovering the mouse near a station (or leg) will
+show the name as a pop-up label.  For this to work:
+
+* 'View &rarr; Map Tips' should be checked in the main menu;
+* the map tip has to be set up ('Properties &rarr; Display') in the relevant layer;
+* the layer has to be the currently _selected_ one, though it does not have to be displayed.
 
 With a digital elevation model (DEM raster layer) one can use the
 'Raster Interpolation' plugin to find the surface elevation at all the
@@ -81,7 +103,7 @@ imported stations (to do this, first create a field to hold the
 numerical result, then run the plugin).  Then, one can use the
 built-in field calculator to make another field containing the _depth
 below surface_, as the surface elevation minus the z-dimension of the
-station, `z($geometry)`.  This information can be displayed in the
+station, `z($geometry)`.  This information can be added to the
 'map tip', etc.
 
 Sample georeferenced survey data can be found in
@@ -90,40 +112,18 @@ Sample georeferenced survey data can be found in
 Further notes on cave surveying and GIS are in 
 [`cave_surveying_and_GIS.pdf`](cave_surveying_and_GIS.pdf).
 
-#### Platform-specific location of dump3d
-
-Currently (but see below) the plugin uses `dump3d` to read the contents of
-the `.3d` file, and obviously will fail if it can't find `dump3d`, or
-there is a survex version mismatch (most likely, by trying to import a
-`.3d` file 'from the future' with an older survex installation).
-
-If you have a non-standard survex installation you can edit
-`survex_python.py` to add an entry for the platform-specific location
-of the `dump3d` executable.  The place to look is where a
-dictionary of platform-specific executables is defined:
-```
-dump3d_dict = {'Linux' : '/usr/bin/dump3d',
-               'Windows' : 'C:\Program Files (x86)\Survex\dump3d'}
-```
-
-The keys here are the return values of a call to `platform.system()`.
-At the moment this dictionary lacks an entry for MAC OS X (e.g.
-`'Darwin' : '...'`).
-
 ### Roadmap
 
-The immediate plan (Feb 2018) is to refactor the code to read the
-(binary) `.3d` file directly rather than relying on `dump3d`, thus
-eliminating this explicit survex dependency.  This will facilitate
-submitting the plugin to be included in the official QGIS plugin list.
+The current version reads the (binary) `.3d` file directly rather than
+relying on `dump3d`, thus eliminating this explicit survex dependency.
+Currently, _all_ the data fields in the file are read (this has to
+be the case otherwise the file reader would get out of sync), however
+some data fields are unused at present:
 
-There is unused metadata in the `.3d` file format
-(not necessarily exposed using `dump3d`).  Therefore a slightly
-longer term plan is:
+* data on misclosure errors;
+* LRUD passage wall data.
 
-* import dates as attributes (fields); 
-* import closure errors as attributes (fields); 
-* import LRUD as attributes (fields).
+Unfortunately these are only indirectly georeferenced.
 
 From the LRUD data one might try to build a polygon layer.  At present
 it seems to me this might best be done by a 'downstream' QGIS
@@ -140,7 +140,7 @@ free to re-use any of the present code under the GPL terms.
 
 ### Copying
 
-Code in this repository is licensed under GLPv2:
+Code in this repository is licensed under GLP v2:
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -158,6 +158,10 @@ along with this program.  If not, see
 
 ### Copyright
 
-Copyright &copy; (2017, 2018) Patrick B Warren.
+The `.3d` file parser is based on a GPL v2 library to handle Survex 3D files (`*.3d`),
+copyright &copy; 2008-2012 Thomas Holder, http://sf.net/users/speleo3/; 
+see https://github.com/speleo3/inkscape-speleo.
+
+Modifications and extensions to import to QGIS copyright &copy; (2017, 2018) Patrick B Warren.
 
 
