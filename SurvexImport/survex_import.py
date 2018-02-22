@@ -493,7 +493,7 @@ class SurvexImport:
                                 self.add_station(station_layer, xyz, label, flag)
                                 break
 
-                # End of byte-gobbling infinite while loop
+                # End of byte-gobbling while loop
 
             # file closes automatically, with open(survex3dfile, 'rb') as fp:
         
