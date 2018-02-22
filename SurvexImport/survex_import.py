@@ -222,7 +222,7 @@ class SurvexImport:
         else:
             return_code = srs.ImportFromProj4(proj4string)
         if return_code:
-            raise Exception("Invalid proj4 string: %s" % proj4string)
+            raise Exception("Invalid proj4 string: " + proj4string)
         code = srs.GetAttrValue('AUTHORITY', 1)
         epsg = int(code)
         QgsMessageLog.logMessage("proj4string %s --> EPSG:%i" % (proj4string, epsg),
@@ -243,30 +243,33 @@ class SurvexImport:
                                  tag='Import .3d', level=QgsMessageLog.INFO)
         return layer
 
-    leg_attrs = {0x01 : 'SURFACE',
-                 0x02 : 'DUPLICATE',
-                 0x04 : 'SPLAY'}
+    leg_attr = {0x01:'SURFACE', 0x02:'DUPLICATE', 0x04:'SPLAY'}
 
-    leg_flags = sorted(leg_attrs.keys())
+    leg_flags = sorted(leg_attr.keys())
+
+    style_type = {0x00:'NORMAL', 0x01:'DIVING', 0x02:'CARTESIAN',
+                  0x03:'CYLPOLAR', 0x04:'NOSURVEY', 0xff:'NOSTYLE'}
 
     # Attributes are inserted like pushing onto a stack, so in reverse order
     
     def add_leg_fields(self, layer):
         """Add attributes (fields) for legs"""
-        attrs = [QgsField(self.leg_attrs[k], QVariant.Int) for k in self.leg_flags]
+        attrs = [QgsField(self.leg_attr[k], QVariant.Int) for k in self.leg_flags]
         attrs.insert(0, QgsField('DATE2', QVariant.Date))
         attrs.insert(0, QgsField('DATE1', QVariant.Date))
+        attrs.insert(0, QgsField('STYLE', QVariant.String))
         attrs.insert(0, QgsField('NAME', QVariant.String))
         layer.dataProvider().addAttributes(attrs)
         layer.updateFields() 
     
-    def add_leg(self, layer, xyz_start, xyz_end, name, date_from, date_to, flag):
-        """Add a leg into the legs layer, flag is raided for the attributes"""
+    def add_leg(self, layer, xyz_start, xyz_end, name, style, date_from, date_to, flag):
+        """Add a leg into the legs layer, attributes from flag"""
         if not layer: return
         xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
         attrs = [1 if flag & k else 0 for k in self.leg_flags]
         attrs.insert(0, date_to)
         attrs.insert(0, date_from)
+        attrs.insert(0, self.style_type[style])
         attrs.insert(0, name)
         linestring = QgsLineStringV2()
         linestring.setPoints(xyz_pair)
@@ -276,24 +279,20 @@ class SurvexImport:
         feat.setAttributes(attrs)
         layer.dataProvider().addFeatures([feat])
         
-    station_attrs = {0x01 : 'SURFACE',
-                     0x02 : 'UNDERGROUND',
-                     0x04 : 'ENTRANCE',
-                     0x08 : 'EXPORTED',
-                     0x10 : 'FIXED',
-                     0x20 : 'ANON'}
+    station_attr = {0x01:'SURFACE', 0x02:'UNDERGROUND', 0x04:'ENTRANCE',
+                    0x08:'EXPORTED', 0x10:'FIXED', 0x20:'ANON'}
 
-    station_flags = sorted(station_attrs.keys())
+    station_flags = sorted(station_attr.keys())
     
     def add_station_fields(self, layer):
         """Add attributes (fields) for stations"""
-        attrs = [QgsField(self.station_attrs[k], QVariant.Int) for k in self.station_flags]
+        attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
         attrs.insert(0, QgsField('NAME', QVariant.String))
         layer.dataProvider().addAttributes(attrs)
         layer.updateFields() 
 
     def add_station(self, layer, xyz, name, flag):
-        """Add a station into the stations layer, using flags as attributes"""
+        """Add a station into the stations layer, atributes from flags"""
         if not layer: return
         attrs = [1 if flag & k else 0 for k in self.station_flags]
         attrs.insert(0, name)
@@ -304,8 +303,8 @@ class SurvexImport:
         layer.dataProvider().addFeatures([feat])
 
     def read_xyz(self, fp):
-        """Read xyz as signed integers according to .3d spec""" 
-        return unpack('<iii', fp.read(12))
+        """Read xyz and convert to metres, according to .3d spec""" 
+        return [0.01*v for v in unpack('<iii', fp.read(12))]
         
     def read_len(self, fp):
         """Read a number as a length according to .3d spec"""
@@ -351,8 +350,6 @@ class SurvexImport:
 
             get_crs = self.dlg.checkGetCRS.isChecked()
 
-            title, epsg = None, None
-
             if not os.path.exists(survex3dfile):
                 raise Exception("File '%s' doesn't exist" % survex3dfile)
 
@@ -378,33 +375,42 @@ class SurvexImport:
                 
                 title, proj4string = [s.decode('utf-8') for s in line.split(b'\x00')]
                 
-                if get_crs:
-                    epsg = self.extract_epsg(proj4string)
+                epsg = self.extract_epsg(proj4string) if get_crs else None
 
                 line = fp.readline().rstrip() # Timestamp
                 
                 if not line.startswith(b'@'):
                     raise IOError('Unrecognised timestamp: ' + survex3dfile)
                 
-                timestamp = int(line[1:]) # Saved, but not used
+                timestamp = int(line[1:]) # Saved, but not used at present
 
-                # System-wide flags
+                # System-wide flags - abort if extended elevation
 
                 flag = ord(fp.read(1))
 
                 if flag & 0x80:
-                    raise IOError('Flagged as extended elevation: ' + survex3dfile)
+                    raise IOError('Extended elevation: ' + survex3dfile)
 
                 # All front-end data read in, now read byte-wise
                 # according to .3d spec.  Note that all elements must
                 # be processed, in order, otherwise we get out of sync
+
+                if include_legs:
+                    leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
+                    self.add_leg_fields(leg_layer)
+                else:
+                    leg_layer = None
+
+                if include_stations:
+                    station_layer = self.add_layer(title, 'stations', 'Point', epsg)
+                    self.add_station_fields(station_layer)
+                else:
+                    station_layer = None
     
-                label = ''
-                day_zero = QDate(1900, 1, 1)
-                date1 = date2 = day_zero
-                current_style = 0xff
-                leg_layer, station_layer = None, None
-            
+                date0 = date1 = date2 = QDate(1900, 1, 1)
+
+                label, style = '', 0xff
+                    
                 while True:
 
                     char = fp.read(1)
@@ -415,33 +421,33 @@ class SurvexImport:
                     byte = ord(char)
 
                     if byte <= 0x05: # STYLE
-                        if byte == 0x00 and current_style == 0x00: # this signals end of data
+                        if byte == 0x00 and style == 0x00: # this signals end of data
                             break # escape from byte-gobbling while loop
                         else:
-                            current_style = byte
+                            style = byte
                 
                     elif byte <= 0x0e: # Reserved
                         continue
         
                     elif byte == 0x0f: # MOVE
-                        xyz = [0.01*v for v in self.read_xyz(fp)]
+                        xyz = self.read_xyz(fp)
 
                     elif byte == 0x10: # DATE (none)
-                        date1 = date2 = day_zero
+                        date1 = date2 = date0
                                     
                     elif byte == 0x11: # DATE (single date)
                         days = unpack('<H', fp.read(2))[0]
-                        date1 = date2 = day_zero.addDays(days)
+                        date1 = date2 = date0.addDays(days)
             
                     elif byte == 0x12:  # DATE (date range, short format)
                         days, extra = unpack('<HB', fp.read(3))
-                        date1 = day_zero.addDays(days)
-                        date2 = day_zero.addDays(days + extra + 1)
+                        date1 = date0.addDays(days)
+                        date2 = date0.addDays(days + extra + 1)
 
                     elif byte == 0x13: # DATE (date range, long format)
                         days1, days2 = unpack('<HH', fp.read(4)) 
-                        date1 = day_zero.addDays(days1)
-                        date2 = day_zero.addDays(days2)
+                        date1 = date0.addDays(days1)
+                        date2 = date0.addDays(days2)
 
                     elif byte <= 0x1e: # Reserved
                         continue
@@ -468,26 +474,20 @@ class SurvexImport:
                         if not (flag & 0x20):
                             label = self.read_label(fp, label)
                         xyz_prev = xyz
-                        xyz = [0.01*v for v in self.read_xyz(fp)]
-                        if include_legs:
-                            if not leg_layer:
-                                leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
-                                self.add_leg_fields(leg_layer)
+                        xyz = self.read_xyz(fp)
+                        if leg_layer:
                             while (True):
                                 if exclude_surface_legs and flag & 0x01: break
                                 if exclude_duplicate_legs and flag & 0x02: break
-                                if exclude_splay_legs and flag & 0x03: break
-                                self.add_leg(leg_layer, xyz_prev, xyz, label, date1, date2, flag)
+                                if exclude_splay_legs and flag & 0x04: break
+                                self.add_leg(leg_layer, xyz_prev, xyz, label, style, date1, date2, flag)
                                 break
 
                     elif byte <= 0xff: # LABEL (or NODE)
                         flag = byte & 0x7f
                         label = self.read_label(fp, label)
-                        xyz = [0.01*v for v in self.read_xyz(fp)]
-                        if include_stations:
-                            if not station_layer:
-                                station_layer = self.add_layer(title, 'stations', 'Point', epsg)
-                                self.add_station_fields(station_layer)
+                        xyz = self.read_xyz(fp)
+                        if station_layer:
                             while (True):
                                 if exclude_surface_stations and flag & 0x01 and not flag & 0x02: break
                                 self.add_station(station_layer, xyz, label, flag)
