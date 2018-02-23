@@ -37,11 +37,7 @@ from PyQt4.QtCore import QVariant, QDate
 from osgeo.osr import SpatialReference
 
 from struct import unpack
-from os import unlink
 from re import search
-from tempfile import NamedTemporaryFile
-from subprocess import Popen, PIPE
-import platform
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
