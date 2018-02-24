@@ -1,6 +1,6 @@
 # QGIS plugin to import survex .3d files
 
-_Requires QGIS &ge; 2.14 for QgsPointV2, and files processed typically by survex &ge; 1.2.14 to report CRS._
+_Requires QGIS &ge; 2.14 for QgsPointV2, and a .3d file processed typically by survex &ge; 1.2.14 to report CRS._
 
 _The current version reads .3d files directly and doesn't require survex to be installed to load data._
 
