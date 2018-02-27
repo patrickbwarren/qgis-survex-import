@@ -453,14 +453,13 @@ class SurvexImport:
             
                     elif byte <= 0x2f: # Reserved
                         continue
-        
-                    elif byte <= 0x31: # XSECT (short format) -- not currently captured
-                        label = self.read_label(fp, label)
-                        lrud = unpack('<hhhh', fp.read(8))
             
-                    elif byte <= 0x33: # XSECT (long format) -- not currently captured
+                    elif byte <= 0x33: # XSECT -- not currently captured
                         label = self.read_label(fp, label)
-                        lrud = unpack('<iiii', fp.read(16))
+                        if byte & 0x02:
+                            lrud = unpack('<iiii', fp.read(16))
+                        else:
+                            lrud = unpack('<hhhh', fp.read(8))
             
                     elif byte <= 0x3f: # Reserved
                         continue

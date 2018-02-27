@@ -184,16 +184,12 @@ with open(args.FILE, 'rb') as fp:
         elif byte <= 0x2f: # Reserved
             continue
         
-        elif byte <= 0x31: # XSECT (short format)
+        elif byte <= 0x33: # XSECT
             current_label = read_label(fp, current_label)
-            lrud = unpack('<hhhh', fp.read(8))
-            print('XSECT ' + to_lrud_string(lrud, current_label, current_date))
-            if byte & 0x01:
-                print('XSECT_END')
-            
-        elif byte <= 0x33: # XSECT (long format)
-            current_label = read_label(fp, current_label)
-            lrud = unpack('<iiii', fp.read(16))
+            if byte & 0x02: # short or long format
+                lrud = unpack('<iiii', fp.read(16))
+            else:
+                lrud = unpack('<hhhh', fp.read(8))
             print('XSECT ' + to_lrud_string(lrud, current_label, current_date))
             if byte & 0x01:
                 print('XSECT_END')
