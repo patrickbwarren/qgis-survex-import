@@ -368,10 +368,10 @@ class SurvexImport:
                     raise IOError('Version >= 8 required: ' + survex3dfile)
 
                 line = fp.readline().rstrip() # Metadata (title and coordinate system)
-                
-                title, proj4string = [s.decode('utf-8') for s in line.split(b'\x00')]
-                
-                epsg = self.extract_epsg(proj4string) if get_crs else None
+                fields = line.split(b'\x00')
+                title = fields[0]
+
+                epsg = self.extract_epsg(fields[1]) if get_crs and len(fields) > 1 else None
 
                 line = fp.readline().rstrip() # Timestamp
                 
