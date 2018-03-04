@@ -285,6 +285,11 @@ class SurvexImport:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
+                        
+            self.traverse_list = []
+            self.station_list = []
+            self.station_xyz = {}
+            self.xsect_list = []
 
             # This is where all the work is done.
 
@@ -359,6 +364,7 @@ class SurvexImport:
                 
                 legs = [] # will be used to capture leg data between MOVEs
                 xsect = [] # will be used to capture XSECT data
+                nlehv = None # In case there isn't any
                     
                 while True:
 
@@ -462,8 +468,9 @@ class SurvexImport:
                 leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
                 
                 attrs = [QgsField(self.leg_attr[k], QVariant.Int) for k in self.leg_flags]
-                [ attrs.insert(0, QgsField(s, QVariant.Double)) for s in ('ERROR_VERT', 'ERROR_HORIZ', 'ERROR', 'LENGTH')]
-                attrs.insert(0, QgsField('NLEGS', QVariant.Int))
+                if nlehv:
+                    [ attrs.insert(0, QgsField(s, QVariant.Double)) for s in ('ERROR_VERT', 'ERROR_HORIZ', 'ERROR', 'LENGTH')]
+                    attrs.insert(0, QgsField('NLEGS', QVariant.Int))
                 attrs.insert(0, QgsField('DATE2', QVariant.Date))
                 attrs.insert(0, QgsField('DATE1', QVariant.Date))
                 attrs.insert(0, QgsField('STYLE', QVariant.String))
@@ -480,8 +487,9 @@ class SurvexImport:
                             x, y, z = [0.01*v for v in xyz]
                             points.append(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
                         attrs = [1 if flag & k else 0 for k in self.leg_flags]
-                        [ attrs.insert(0, 0.01*v) for v in reversed(nlehv[1:5]) ]
-                        attrs.insert(0, nlehv[0])
+                        if nlehv:
+                            [ attrs.insert(0, 0.01*v) for v in reversed(nlehv[1:5]) ]
+                            attrs.insert(0, nlehv[0])
                         attrs.insert(0, to_date)
                         attrs.insert(0, from_date)
                         attrs.insert(0, self.style_type[style])
