@@ -38,30 +38,9 @@ from osgeo.osr import SpatialReference
 
 from struct import unpack
 from re import search
-from math import sqrt
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
-
-    style_type = {0x00:'NORMAL', 0x01:'DIVING', 0x02:'CARTESIAN',
-                  0x03:'CYLPOLAR', 0x04:'NOSURVEY', 0xff:'NOSTYLE'}
-
-    leg_attr = {0x01:'SURFACE', 0x02:'DUPLICATE', 0x04:'SPLAY'}
-                
-    leg_flags = sorted(leg_attr.keys())
-            
-    leg_list = []
-    
-    station_attr = {0x01:'SURFACE', 0x02:'UNDERGROUND', 0x04:'ENTRANCE',
-                    0x08:'EXPORTED', 0x10:'FIXED', 0x20:'ANON'}
-
-    station_flags = sorted(station_attr.keys())
-    
-    station_list = []
-
-    station_xyz = {}
-
-    xsect_list = []
 
     def __init__(self, iface):
         """Constructor.
@@ -260,9 +239,68 @@ class SurvexImport:
                                  tag='Import .3d', level=QgsMessageLog.INFO)
         return layer
 
+    leg_attr = {0x01:'SURFACE', 0x02:'DUPLICATE', 0x04:'SPLAY'}
+
+    leg_flags = sorted(leg_attr.keys())
+
+    style_type = {0x00:'NORMAL', 0x01:'DIVING', 0x02:'CARTESIAN',
+                  0x03:'CYLPOLAR', 0x04:'NOSURVEY', 0xff:'NOSTYLE'}
+
+    # Attributes are inserted like pushing onto a stack, so in reverse order
+    
+    def add_leg_fields(self, layer):
+        """Add attributes (fields) for legs"""
+        attrs = [QgsField(self.leg_attr[k], QVariant.Int) for k in self.leg_flags]
+        attrs.insert(0, QgsField('DATE2', QVariant.Date))
+        attrs.insert(0, QgsField('DATE1', QVariant.Date))
+        attrs.insert(0, QgsField('STYLE', QVariant.String))
+        attrs.insert(0, QgsField('NAME', QVariant.String))
+        layer.dataProvider().addAttributes(attrs)
+        layer.updateFields() 
+    
+    def add_leg(self, layer, xyz_start, xyz_end, name, style, date_from, date_to, flag):
+        """Add a leg into the legs layer, attributes from flag"""
+        if not layer: return
+        xyz_pair = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in [xyz_start, xyz_end]]
+        attrs = [1 if flag & k else 0 for k in self.leg_flags]
+        attrs.insert(0, date_to)
+        attrs.insert(0, date_from)
+        attrs.insert(0, self.style_type[style])
+        attrs.insert(0, name)
+        linestring = QgsLineStringV2()
+        linestring.setPoints(xyz_pair)
+        feat = QgsFeature()
+        geom = QgsGeometry(linestring)
+        feat.setGeometry(geom) 
+        feat.setAttributes(attrs)
+        layer.dataProvider().addFeatures([feat])
+        
+    station_attr = {0x01:'SURFACE', 0x02:'UNDERGROUND', 0x04:'ENTRANCE',
+                    0x08:'EXPORTED', 0x10:'FIXED', 0x20:'ANON'}
+
+    station_flags = sorted(station_attr.keys())
+    
+    def add_station_fields(self, layer):
+        """Add attributes (fields) for stations"""
+        attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
+        attrs.insert(0, QgsField('NAME', QVariant.String))
+        layer.dataProvider().addAttributes(attrs)
+        layer.updateFields() 
+
+    def add_station(self, layer, xyz, name, flag):
+        """Add a station into the stations layer, atributes from flags"""
+        if not layer: return
+        attrs = [1 if flag & k else 0 for k in self.station_flags]
+        attrs.insert(0, name)
+        feat = QgsFeature()
+        geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
+        feat.setGeometry(geom)
+        feat.setAttributes(attrs)
+        layer.dataProvider().addFeatures([feat])
+
     def read_xyz(self, fp):
-        """Read xyz, according to .3d spec""" 
-        return unpack('<iii', fp.read(12))
+        """Read xyz and convert to metres, according to .3d spec""" 
+        return [0.01*v for v in unpack('<iii', fp.read(12))]
         
     def read_len(self, fp):
         """Read a number as a length according to .3d spec"""
@@ -299,7 +337,6 @@ class SurvexImport:
 
             include_legs = self.dlg.checkLegs.isChecked()
             include_stations = self.dlg.checkStations.isChecked()
-            calculate_walls = self.dlg.checkWalls.isChecked()
 
             exclude_surface_legs = not self.dlg.checkLegsSurface.isChecked()
             exclude_splay_legs = not self.dlg.checkLegsSplay.isChecked()
@@ -313,7 +350,7 @@ class SurvexImport:
                 raise Exception("File '%s' doesn't exist" % survex3dfile)
 
             # Read .3d file as binary
-            
+
             with open(survex3dfile, 'rb') as fp:
     
                 line = fp.readline().rstrip() # File ID check
@@ -353,12 +390,22 @@ class SurvexImport:
                 # All front-end data read in, now read byte-wise
                 # according to .3d spec.  Note that all elements must
                 # be processed, in order, otherwise we get out of sync
+
+                if include_legs:
+                    leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
+                    self.add_leg_fields(leg_layer)
+                else:
+                    leg_layer = None
+
+                if include_stations:
+                    station_layer = self.add_layer(title, 'stations', 'Point', epsg)
+                    self.add_station_fields(station_layer)
+                else:
+                    station_layer = None
     
                 date0 = date1 = date2 = QDate(1900, 1, 1)
 
                 label, style = '', 0xff
-                
-                xsect = []
                     
                 while True:
 
@@ -407,16 +454,12 @@ class SurvexImport:
                     elif byte <= 0x2f: # Reserved
                         continue
             
-                    elif byte <= 0x33: # XSECT
+                    elif byte <= 0x33: # XSECT -- not currently captured
                         label = self.read_label(fp, label)
                         if byte & 0x02:
                             lrud = unpack('<iiii', fp.read(16))
                         else:
                             lrud = unpack('<hhhh', fp.read(8))
-                        xsect.append((label, lrud))
-                        if byte & 0x01:
-                            self.xsect_list.append(xsect)
-                            xsect = []
             
                     elif byte <= 0x3f: # Reserved
                         continue
@@ -427,200 +470,32 @@ class SurvexImport:
                             label = self.read_label(fp, label)
                         xyz_prev = xyz
                         xyz = self.read_xyz(fp)
-                        while (True):
-                            if exclude_surface_legs and flag & 0x01: break
-                            if exclude_duplicate_legs and flag & 0x02: break
-                            if exclude_splay_legs and flag & 0x04: break
-                            self.leg_list.append(((xyz_prev, xyz), label, style, date1, date2, flag))
-                            break
+                        if leg_layer:
+                            while (True):
+                                if exclude_surface_legs and flag & 0x01: break
+                                if exclude_duplicate_legs and flag & 0x02: break
+                                if exclude_splay_legs and flag & 0x04: break
+                                self.add_leg(leg_layer, xyz_prev, xyz, label, style, date1, date2, flag)
+                                break
 
                     elif byte <= 0xff: # LABEL (or NODE)
                         flag = byte & 0x7f
                         label = self.read_label(fp, label)
                         xyz = self.read_xyz(fp)
-                        while (True):
-                            if exclude_surface_stations and flag & 0x01 and not flag & 0x02: break
-                            self.station_list.append((xyz, label, flag))
-                            break
-                        self.station_xyz[label] = xyz
+                        if station_layer:
+                            while (True):
+                                if exclude_surface_stations and flag & 0x01 and not flag & 0x02: break
+                                self.add_station(station_layer, xyz, label, flag)
+                                break
 
                 # End of byte-gobbling while loop
 
             # file closes automatically, with open(survex3dfile, 'rb') as fp:
-
-            # Now create the layers in QGIS.  Attributes are inserted
-            # like pushing onto a stack, so in reverse order
-
-            if include_legs:
-                
-                leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
-                
-                attrs = [QgsField(self.leg_attr[k], QVariant.Int) for k in self.leg_flags]
-                attrs.insert(0, QgsField('DATE2', QVariant.Date))
-                attrs.insert(0, QgsField('DATE1', QVariant.Date))
-                attrs.insert(0, QgsField('STYLE', QVariant.String))
-                attrs.insert(0, QgsField('NAME', QVariant.String))
-                leg_layer.dataProvider().addAttributes(attrs)
-                leg_layer.updateFields()
-                
-                features = []
-                for (xyz_pair, label, style, date_from, date_to, flag) in self.leg_list:
-                    points = []
-                    for xyz in xyz_pair:
-                        x, y, z = [0.01*v for v in xyz]
-                        points.append(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
-                    attrs = [1 if flag & k else 0 for k in self.leg_flags]
-                    attrs.insert(0, date_to)
-                    attrs.insert(0, date_from)
-                    attrs.insert(0, self.style_type[style])
-                    attrs.insert(0, label)
-                    linestring = QgsLineStringV2()
-                    linestring.setPoints(points)
-                    feat = QgsFeature()
-                    geom = QgsGeometry(linestring)
-                    feat.setGeometry(geom) 
-                    feat.setAttributes(attrs)
-                    features.append(feat)
-                    
-                leg_layer.dataProvider().addFeatures(features)
+        
+            if leg_layer:
                 leg_layer.updateExtents() 
                 QgsMapLayerRegistry.instance().addMapLayers([leg_layer])
 
-            if include_stations:
-                
-                station_layer = self.add_layer(title, 'stations', 'Point', epsg)
-    
-                attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
-                attrs.insert(0, QgsField('NAME', QVariant.String))
-                station_layer.dataProvider().addAttributes(attrs)
-                station_layer.updateFields() 
-    
-                features = []
-                for (xyz, label, flag) in self.station_list:
-                    x, y, z = [0.01*v for v in xyz]
-                    attrs = [1 if flag & k else 0 for k in self.station_flags]
-                    attrs.insert(0, label)
-                    feat = QgsFeature()
-                    geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
-                    feat.setGeometry(geom)
-                    feat.setAttributes(attrs)
-                    features.append(feat)
-                    
-                station_layer.dataProvider().addFeatures(features)
+            if station_layer:
                 station_layer.updateExtents() 
                 QgsMapLayerRegistry.instance().addMapLayers([station_layer])
-
-            # The calculations below use integers for xyz; the
-            # conversion to metres is left to the end.  Then dh2 is an
-            # integer and the test for a plumb is safely dh2 = 0.
-
-            if calculate_walls:
-                                
-                traverse_features = []
-                wall_features = []
-                xsect_features = []
-                quad_features = []
-                
-                for xsect in self.xsect_list:
-
-                    if len(xsect) < 2:
-                        continue
-
-                    centerline = []
-                    for label, lrud in xsect:
-                        xyz = self.station_xyz[label] # look up coordinates from label
-                        centerline.append(xyz + lrud[0:2]) # and collect with LR data
-
-                    direction = []
-                    for i, (x, y, z, l, r) in enumerate(centerline):
-                        if i > 0:
-                            dx, dy, dz = x - xp, y - yp, z - zp
-                            dh2 = dx*dx + dy*dy # horizontal displacement (mm^2)
-                            norm = sqrt(dh2 + dz*dz) # weight with cos(inclination)
-                            dx, dy = (dx/norm, dy/norm) if dh2 > 0 and norm > 0 else (0, 0)
-                            direction.append((dx, dy))
-                        xp, yp, zp = x, y, z
-
-                    left_wall = []
-                    right_wall = []
-        
-                    for i, (x, y, z, l, r) in enumerate(centerline):
-                        d1x, d1y = direction[i-1] if i > 0 else (0, 0)
-                        d2x, d2y = direction[i] if i+1 < len(centerline) else (0, 0)
-                        dx, dy = d1x+d2x, d1y+d2y # weighted mean of direction vectors
-                        norm = sqrt(dx*dx + dy*dy) # normalise to unit vector
-                        ex, ey = (dx/norm, dy/norm) if norm > 0 else (0, 0)
-                        # Since this is the last step, the conversion to metres is done here
-                        left_wall.append((0.01*(x-l*ey), 0.01*(y+l*ex), 0.01*z))
-                        right_wall.append((0.01*(x+r*ey), 0.01*(y-r*ex), 0.01*z))
-
-                    # Now create the feature sets
-
-                    points = []
-                    for xyzlr in centerline:
-                        xyz = [0.01*v for v in xyzlr[0:3]] # These were mm, convert to metres
-                        points.append(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
-                    linestring = QgsLineStringV2()
-                    linestring.setPoints(points)
-                    feat = QgsFeature()
-                    geom = QgsGeometry(linestring)
-                    feat.setGeometry(geom)
-                    traverse_features.append(feat)
-
-                    for wall in (left_wall, right_wall):
-                        points = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in wall]
-                        linestring = QgsLineStringV2()
-                        linestring.setPoints(points)
-                        feat = QgsFeature()
-                        geom = QgsGeometry(linestring)
-                        feat.setGeometry(geom) 
-                        wall_features.append(feat)
-
-                    for i, xyz_pair in enumerate(zip(left_wall, right_wall)):
-
-                        points = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in xyz_pair]
-                        linestring = QgsLineStringV2()
-                        linestring.setPoints(points)
-                        feat = QgsFeature()
-                        geom = QgsGeometry(linestring)
-                        feat.setGeometry(geom) 
-                        xsect_features.append(feat)
-
-                        if i > 0:
-                            points = []
-                            for xyz in tuple(reversed(prev_xyz_pair)) + xyz_pair + (prev_xyz_pair[1],):
-                                points.append(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
-                            linestring = QgsLineStringV2()
-                            linestring.setPoints(points)
-                            polygon = QgsPolygonV2()
-                            polygon.setExteriorRing(linestring)
-                            feat = QgsFeature()
-                            geom = QgsGeometry(polygon)
-                            feat.setGeometry(geom) 
-                            quad_features.append(feat)
-                            
-                        prev_xyz_pair = xyz_pair
-
-                    # End of enumerate(zip(left_wall, right_wall))
-
-                # End of processing xsect_list
-                        
-                travs_layer = self.add_layer(title, 'traverses', 'LineString', epsg)
-                travs_layer.dataProvider().addFeatures(traverse_features)
-                travs_layer.updateExtents()
-
-                walls_layer = self.add_layer(title, 'walls', 'LineString', epsg)
-                walls_layer.dataProvider().addFeatures(wall_features)
-                walls_layer.updateExtents()
-
-                xsect_layer = self.add_layer(title, 'xsections', 'LineString', epsg)
-                xsect_layer.dataProvider().addFeatures(xsect_features)
-                xsect_layer.updateExtents()
-
-                quads_layer = self.add_layer(title, 'polygons', 'MultiPolygon', epsg)
-                quads_layer.dataProvider().addFeatures(quad_features)
-                quads_layer.updateExtents()
-
-                QgsMapLayerRegistry.instance().addMapLayers([travs_layer, walls_layer, xsect_layer, quads_layer])
-
-# That's it

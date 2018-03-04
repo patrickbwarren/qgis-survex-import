@@ -202,7 +202,7 @@ with open(args.FILE, 'rb') as fp:
             if not (flag & 0x20):
                 current_label = read_label(fp, current_label)
             xyz = read_xyz(fp)
-            flags = [v for k, v in line_flags.items() if flag & k]
+            flags = [v for k, v in sorted(line_flags.iteritems()) if flag & k]
             tag = styles[current_style]
             if flags:
                 tag = tag + ' ' + ' '.join(flags)
@@ -214,7 +214,7 @@ with open(args.FILE, 'rb') as fp:
             flag = byte & 0x7f
             current_label = read_label(fp, current_label)
             xyz = read_xyz(fp)
-            flags = [v for k, v in node_flags.items() if flag & k]
+            flags = [v for k, v in sorted(node_flags.iteritems()) if flag & k]
             if flags:
                 tag = ' '.join(flags)
                 print('NODE %s [%s] %s' % (to_string(xyz), current_label, tag))
