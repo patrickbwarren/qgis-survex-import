@@ -4,6 +4,9 @@
     <edittype widgetv2type="TextEdit" name="NAME">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
+    <edittype widgetv2type="TextEdit" name="ELEVATION">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
     <edittype widgetv2type="TextEdit" name="SURFACE">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
@@ -30,7 +33,7 @@
           <prop k="angle" v="0"/>
           <prop k="color" v="43,131,186,255"/>
           <prop k="color_dd_active" v="1"/>
-          <prop k="color_dd_expression" v="ramp_color('Spectral',scale_linear(z($geometry),@zmin,@zmax,1,0))"/>
+          <prop k="color_dd_expression" v="ramp_color('Spectral',scale_linear(&quot;ELEVATION&quot;,@zmin,@zmax,1,0))"/>
           <prop k="color_dd_field" v=""/>
           <prop k="color_dd_useexpr" v="1"/>
           <prop k="horizontal_anchor_point" v="1"/>
@@ -202,7 +205,7 @@
     </property>
     <property key="variableValues">
       <value>400</value>
-      <value>250</value>
+      <value>320</value>
     </property>
   </customproperties>
   <blendMode>0</blendMode>
@@ -261,12 +264,13 @@
   <annotationform></annotationform>
   <aliases>
     <alias field="NAME" index="0" name=""/>
-    <alias field="SURFACE" index="1" name=""/>
-    <alias field="UNDERGROUND" index="2" name=""/>
-    <alias field="ENTRANCE" index="3" name=""/>
-    <alias field="EXPORTED" index="4" name=""/>
-    <alias field="FIXED" index="5" name=""/>
-    <alias field="ANON" index="6" name=""/>
+    <alias field="ELEVATION" index="1" name=""/>
+    <alias field="SURFACE" index="2" name=""/>
+    <alias field="UNDERGROUND" index="3" name=""/>
+    <alias field="ENTRANCE" index="4" name=""/>
+    <alias field="EXPORTED" index="5" name=""/>
+    <alias field="FIXED" index="6" name=""/>
+    <alias field="ANON" index="7" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
@@ -281,6 +285,7 @@
       <column width="-1" hidden="0" type="field" name="EXPORTED"/>
       <column width="-1" hidden="0" type="field" name="FIXED"/>
       <column width="-1" hidden="0" type="field" name="ANON"/>
+      <column width="-1" hidden="0" type="field" name="ELEVATION"/>
     </columns>
   </attributetableconfig>
   <editform></editform>
@@ -313,6 +318,7 @@ def my_form_open(dialog, layer, feature):
   </conditionalstyles>
   <defaults>
     <default field="NAME" expression=""/>
+    <default field="ELEVATION" expression=""/>
     <default field="SURFACE" expression=""/>
     <default field="UNDERGROUND" expression=""/>
     <default field="ENTRANCE" expression=""/>

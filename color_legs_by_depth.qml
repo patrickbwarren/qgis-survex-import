@@ -1,37 +1,58 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="2.18.15" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
+<qgis version="2.18.16" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
   <edittypes>
-    <edittype widgetv2type="TextEdit" name="Layer">
+    <edittype widgetv2type="TextEdit" name="NAME">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="SubClasses">
+    <edittype widgetv2type="TextEdit" name="ELEVATION">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="ExtendedEn">
+    <edittype widgetv2type="TextEdit" name="STYLE">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="Linetype">
+    <edittype widgetv2type="TextEdit" name="DATE1">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="EntityHand">
+    <edittype widgetv2type="TextEdit" name="DATE2">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="Text">
+    <edittype widgetv2type="TextEdit" name="NLEGS">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="LENGTH">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ERROR">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ERROR_HORIZ">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ERROR_VERT">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="SURFACE">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="DUPLICATE">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="SPLAY">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
   </edittypes>
-  <renderer-v2 attr="0.5*(z(start_point($geometry))+z(end_point($geometry)))" forceraster="0" symbollevels="0" type="graduatedSymbol" graduatedMethod="GraduatedColor" enableorderby="0">
+  <renderer-v2 attr="ELEVATION" forceraster="0" symbollevels="0" type="graduatedSymbol" graduatedMethod="GraduatedColor" enableorderby="0">
     <ranges>
-      <range render="true" symbol="0" lower="184.840000000000003" upper="200.518500000000017" label=" 185 - 201 "/>
-      <range render="true" symbol="1" lower="200.518500000000017" upper="216.197000000000003" label=" 201 - 216 "/>
-      <range render="true" symbol="2" lower="216.197000000000003" upper="231.875499999999988" label=" 216 - 232 "/>
-      <range render="true" symbol="3" lower="231.875499999999988" upper="247.553999999999974" label=" 232 - 248 "/>
-      <range render="true" symbol="4" lower="247.553999999999974" upper="263.232499999999959" label=" 248 - 263 "/>
-      <range render="true" symbol="5" lower="263.232499999999959" upper="278.910999999999945" label=" 263 - 279 "/>
-      <range render="true" symbol="6" lower="278.910999999999945" upper="294.589499999999930" label=" 279 - 295 "/>
-      <range render="true" symbol="7" lower="294.589499999999930" upper="310.267999999999915" label=" 295 - 310 "/>
-      <range render="true" symbol="8" lower="310.267999999999915" upper="325.946499999999901" label=" 310 - 326 "/>
-      <range render="true" symbol="9" lower="325.946499999999901" upper="341.625000000000000" label=" 326 - 342 "/>
+      <range render="true" symbol="0" lower="325.860000000000014" upper="333.064500000000010" label=" 326 - 333 "/>
+      <range render="true" symbol="1" lower="333.064500000000010" upper="340.269000000000005" label=" 333 - 340 "/>
+      <range render="true" symbol="2" lower="340.269000000000005" upper="347.473500000000001" label=" 340 - 347 "/>
+      <range render="true" symbol="3" lower="347.473500000000001" upper="354.677999999999997" label=" 347 - 355 "/>
+      <range render="true" symbol="4" lower="354.677999999999997" upper="361.882499999999993" label=" 355 - 362 "/>
+      <range render="true" symbol="5" lower="361.882499999999993" upper="369.086999999999989" label=" 362 - 369 "/>
+      <range render="true" symbol="6" lower="369.086999999999989" upper="376.291499999999985" label=" 369 - 376 "/>
+      <range render="true" symbol="7" lower="376.291499999999985" upper="383.495999999999981" label=" 376 - 383 "/>
+      <range render="true" symbol="8" lower="383.495999999999981" upper="390.700499999999977" label=" 383 - 391 "/>
+      <range render="true" symbol="9" lower="390.700499999999977" upper="397.904999999999973" label=" 391 - 398 "/>
     </ranges>
     <symbols>
       <symbol alpha="1" clip_to_extent="1" type="line" name="0">
@@ -256,7 +277,7 @@
     <mode name="equal"/>
     <rotation/>
     <sizescale scalemethod="diameter"/>
-    <labelformat format=" %1 - %2 " trimtrailingzeroes="false" decimalplaces="0"/>
+    <labelformat format=" %1 - %2 " trimtrailingzeroes="false" decimalplaces="1"/>
   </renderer-v2>
   <labeling type="simple"/>
   <customproperties>
@@ -430,7 +451,6 @@
   <SingleCategoryDiagramRenderer diagramType="Histogram" sizeLegend="0" attributeLegend="1">
     <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="inf">
       <fontProperties description="Sans Serif,10,-1,5,50,0,0,0,0,0" style=""/>
-      <attribute field="" color="#000000" label=""/>
     </DiagramCategory>
     <symbol alpha="1" clip_to_extent="1" type="marker" name="sizeSymbol">
       <layer pass="0" class="SimpleMarker" locked="0">
@@ -458,25 +478,39 @@
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform>.</annotationform>
   <aliases>
-    <alias field="Layer" index="0" name=""/>
-    <alias field="SubClasses" index="1" name=""/>
-    <alias field="ExtendedEn" index="2" name=""/>
-    <alias field="Linetype" index="3" name=""/>
-    <alias field="EntityHand" index="4" name=""/>
-    <alias field="Text" index="5" name=""/>
+    <alias field="NAME" index="0" name=""/>
+    <alias field="ELEVATION" index="1" name=""/>
+    <alias field="STYLE" index="2" name=""/>
+    <alias field="DATE1" index="3" name=""/>
+    <alias field="DATE2" index="4" name=""/>
+    <alias field="NLEGS" index="5" name=""/>
+    <alias field="LENGTH" index="6" name=""/>
+    <alias field="ERROR" index="7" name=""/>
+    <alias field="ERROR_HORIZ" index="8" name=""/>
+    <alias field="ERROR_VERT" index="9" name=""/>
+    <alias field="SURFACE" index="10" name=""/>
+    <alias field="DUPLICATE" index="11" name=""/>
+    <alias field="SPLAY" index="12" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
   <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
     <columns>
-      <column width="-1" hidden="0" type="field" name="Layer"/>
-      <column width="-1" hidden="0" type="field" name="SubClasses"/>
-      <column width="-1" hidden="0" type="field" name="ExtendedEn"/>
-      <column width="-1" hidden="0" type="field" name="Linetype"/>
-      <column width="-1" hidden="0" type="field" name="EntityHand"/>
-      <column width="-1" hidden="0" type="field" name="Text"/>
       <column width="-1" hidden="1" type="actions"/>
+      <column width="-1" hidden="0" type="field" name="NAME"/>
+      <column width="-1" hidden="0" type="field" name="ELEVATION"/>
+      <column width="-1" hidden="0" type="field" name="STYLE"/>
+      <column width="-1" hidden="0" type="field" name="DATE1"/>
+      <column width="-1" hidden="0" type="field" name="DATE2"/>
+      <column width="-1" hidden="0" type="field" name="NLEGS"/>
+      <column width="-1" hidden="0" type="field" name="LENGTH"/>
+      <column width="-1" hidden="0" type="field" name="ERROR"/>
+      <column width="-1" hidden="0" type="field" name="ERROR_HORIZ"/>
+      <column width="-1" hidden="0" type="field" name="ERROR_VERT"/>
+      <column width="-1" hidden="0" type="field" name="SURFACE"/>
+      <column width="-1" hidden="0" type="field" name="DUPLICATE"/>
+      <column width="-1" hidden="0" type="field" name="SPLAY"/>
     </columns>
   </attributetableconfig>
   <editform>.</editform>
@@ -508,12 +542,19 @@ def my_form_open(dialog, layer, feature):
     <fieldstyles/>
   </conditionalstyles>
   <defaults>
-    <default field="Layer" expression=""/>
-    <default field="SubClasses" expression=""/>
-    <default field="ExtendedEn" expression=""/>
-    <default field="Linetype" expression=""/>
-    <default field="EntityHand" expression=""/>
-    <default field="Text" expression=""/>
+    <default field="NAME" expression=""/>
+    <default field="ELEVATION" expression=""/>
+    <default field="STYLE" expression=""/>
+    <default field="DATE1" expression=""/>
+    <default field="DATE2" expression=""/>
+    <default field="NLEGS" expression=""/>
+    <default field="LENGTH" expression=""/>
+    <default field="ERROR" expression=""/>
+    <default field="ERROR_HORIZ" expression=""/>
+    <default field="ERROR_VERT" expression=""/>
+    <default field="SURFACE" expression=""/>
+    <default field="DUPLICATE" expression=""/>
+    <default field="SPLAY" expression=""/>
   </defaults>
   <previewExpression></previewExpression>
   <layerGeometryType>1</layerGeometryType>

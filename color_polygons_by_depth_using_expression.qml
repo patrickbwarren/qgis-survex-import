@@ -1,14 +1,18 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis version="2.18.16" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
-  <edittypes/>
+  <edittypes>
+    <edittype widgetv2type="TextEdit" name="ELEVATION">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+  </edittypes>
   <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="1">
     <symbols>
       <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
         <layer pass="0" class="SimpleFill" locked="0">
           <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="color" v="43,131,186,255"/>
+          <prop k="color" v="214,59,28,255"/>
           <prop k="color_dd_active" v="1"/>
-          <prop k="color_dd_expression" v="ramp_color('Spectral',scale_linear(0.5*(z(point_n($geometry,1))+z(point_n($geometry,3))),@zmin,@zmax,1,0))"/>
+          <prop k="color_dd_expression" v="ramp_color('Spectral',scale_linear(&quot;ELEVATION&quot;,@zmin,@zmax,1,0))"/>
           <prop k="color_dd_field" v=""/>
           <prop k="color_dd_useexpr" v="1"/>
           <prop k="joinstyle" v="bevel"/>
@@ -26,7 +30,7 @@
     <rotation/>
     <sizescale scalemethod="diameter"/>
     <orderby>
-      <orderByClause asc="1" nullsFirst="0">0.5*(z(point_n($geometry,1))+z(point_n($geometry,3)))</orderByClause>
+      <orderByClause asc="1" nullsFirst="0">"ELEVATION"</orderByClause>
     </orderby>
   </renderer-v2>
   <labeling type="simple"/>
@@ -175,14 +179,14 @@
       <value>zmin</value>
     </property>
     <property key="variableValues">
-      <value>190</value>
-      <value>120</value>
+      <value>400</value>
+      <value>320</value>
     </property>
   </customproperties>
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield></displayfield>
+  <displayfield>ELEVATION</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -233,12 +237,15 @@
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
-  <aliases/>
+  <aliases>
+    <alias field="ELEVATION" index="0" name=""/>
+  </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="-1415970816">
     <columns>
+      <column width="-1" hidden="0" type="field" name="ELEVATION"/>
       <column width="-1" hidden="1" type="actions"/>
     </columns>
   </attributetableconfig>
@@ -270,7 +277,9 @@ def my_form_open(dialog, layer, feature):
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <defaults/>
+  <defaults>
+    <default field="ELEVATION" expression=""/>
+  </defaults>
   <previewExpression></previewExpression>
   <layerGeometryType>2</layerGeometryType>
 </qgis>

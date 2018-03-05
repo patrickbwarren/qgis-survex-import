@@ -1,54 +1,69 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="2.18.16" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
+<qgis version="2.18.16" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
   <edittypes>
     <edittype widgetv2type="TextEdit" name="NAME">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ELEVATION">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="STYLE">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="DATE1">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="DATE2">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="NLEGS">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="LENGTH">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ERROR">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ERROR_HORIZ">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ERROR_VERT">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
     <edittype widgetv2type="TextEdit" name="SURFACE">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="UNDERGROUND">
+    <edittype widgetv2type="TextEdit" name="DUPLICATE">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="ENTRANCE">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="EXPORTED">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="FIXED">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="ANON">
+    <edittype widgetv2type="TextEdit" name="SPLAY">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
   </edittypes>
   <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
     <symbols>
-      <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
-        <layer pass="0" class="SimpleMarker" locked="0">
-          <prop k="angle" v="0"/>
-          <prop k="color" v="43,131,186,255"/>
+      <symbol alpha="1" clip_to_extent="1" type="line" name="0">
+        <layer pass="0" class="SimpleLine" locked="0">
+          <prop k="capstyle" v="square"/>
           <prop k="color_dd_active" v="1"/>
-          <prop k="color_dd_expression" v="ramp_color('Spectral',scale_linear(z($geometry),@zmin,@zmax,1,0))"/>
+          <prop k="color_dd_expression" v="ramp_color('Spectral',scale_linear(&quot;ELEVATION&quot;,@zmin,@zmax,1,0))"/>
           <prop k="color_dd_field" v=""/>
           <prop k="color_dd_useexpr" v="1"/>
-          <prop k="horizontal_anchor_point" v="1"/>
+          <prop k="customdash" v="5;2"/>
+          <prop k="customdash_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="customdash_unit" v="MM"/>
+          <prop k="draw_inside_polygon" v="0"/>
           <prop k="joinstyle" v="bevel"/>
-          <prop k="name" v="circle"/>
-          <prop k="offset" v="0,0"/>
+          <prop k="line_color" v="43,131,186,255"/>
+          <prop k="line_style" v="solid"/>
+          <prop k="line_width" v="0.26"/>
+          <prop k="line_width_unit" v="MM"/>
+          <prop k="offset" v="0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="outline_color" v="0,0,0,255"/>
-          <prop k="outline_style" v="solid"/>
-          <prop k="outline_width" v="0"/>
-          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="outline_width_unit" v="MM"/>
-          <prop k="scale_method" v="diameter"/>
-          <prop k="size" v="2"/>
-          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="size_unit" v="MM"/>
-          <prop k="vertical_anchor_point" v="1"/>
+          <prop k="use_custom_dash" v="0"/>
+          <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
         </layer>
       </symbol>
     </symbols>
@@ -111,7 +126,7 @@
     <property key="labeling/maxNumLabels" value="2000"/>
     <property key="labeling/mergeLines" value="false"/>
     <property key="labeling/minFeatureSize" value="0"/>
-    <property key="labeling/multilineAlign" value="3"/>
+    <property key="labeling/multilineAlign" value="4294967295"/>
     <property key="labeling/multilineHeight" value="1"/>
     <property key="labeling/namedStyle" value="Normal"/>
     <property key="labeling/obstacle" value="true"/>
@@ -119,7 +134,7 @@
     <property key="labeling/obstacleType" value="0"/>
     <property key="labeling/offsetType" value="0"/>
     <property key="labeling/placeDirectionSymbol" value="0"/>
-    <property key="labeling/placement" value="6"/>
+    <property key="labeling/placement" value="2"/>
     <property key="labeling/placementFlags" value="10"/>
     <property key="labeling/plussign" value="false"/>
     <property key="labeling/predefinedPositionOrder" value="TR,TL,BR,BL,R,L,TSR,BSR"/>
@@ -201,14 +216,14 @@
       <value>zmin</value>
     </property>
     <property key="variableValues">
-      <value>190</value>
-      <value>120</value>
+      <value>400</value>
+      <value>320</value>
     </property>
   </customproperties>
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield>NAME</displayfield>
+  <displayfield>Layer</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -257,16 +272,22 @@
       </layer>
     </symbol>
   </SingleCategoryDiagramRenderer>
-  <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
-  <annotationform></annotationform>
+  <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
+  <annotationform>.</annotationform>
   <aliases>
     <alias field="NAME" index="0" name=""/>
-    <alias field="SURFACE" index="1" name=""/>
-    <alias field="UNDERGROUND" index="2" name=""/>
-    <alias field="ENTRANCE" index="3" name=""/>
-    <alias field="EXPORTED" index="4" name=""/>
-    <alias field="FIXED" index="5" name=""/>
-    <alias field="ANON" index="6" name=""/>
+    <alias field="ELEVATION" index="1" name=""/>
+    <alias field="STYLE" index="2" name=""/>
+    <alias field="DATE1" index="3" name=""/>
+    <alias field="DATE2" index="4" name=""/>
+    <alias field="NLEGS" index="5" name=""/>
+    <alias field="LENGTH" index="6" name=""/>
+    <alias field="ERROR" index="7" name=""/>
+    <alias field="ERROR_HORIZ" index="8" name=""/>
+    <alias field="ERROR_VERT" index="9" name=""/>
+    <alias field="SURFACE" index="10" name=""/>
+    <alias field="DUPLICATE" index="11" name=""/>
+    <alias field="SPLAY" index="12" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
@@ -275,18 +296,24 @@
     <columns>
       <column width="-1" hidden="1" type="actions"/>
       <column width="-1" hidden="0" type="field" name="NAME"/>
+      <column width="-1" hidden="0" type="field" name="ELEVATION"/>
+      <column width="-1" hidden="0" type="field" name="STYLE"/>
+      <column width="-1" hidden="0" type="field" name="DATE1"/>
+      <column width="-1" hidden="0" type="field" name="DATE2"/>
+      <column width="-1" hidden="0" type="field" name="NLEGS"/>
+      <column width="-1" hidden="0" type="field" name="LENGTH"/>
+      <column width="-1" hidden="0" type="field" name="ERROR"/>
+      <column width="-1" hidden="0" type="field" name="ERROR_HORIZ"/>
+      <column width="-1" hidden="0" type="field" name="ERROR_VERT"/>
       <column width="-1" hidden="0" type="field" name="SURFACE"/>
-      <column width="-1" hidden="0" type="field" name="UNDERGROUND"/>
-      <column width="-1" hidden="0" type="field" name="ENTRANCE"/>
-      <column width="-1" hidden="0" type="field" name="EXPORTED"/>
-      <column width="-1" hidden="0" type="field" name="FIXED"/>
-      <column width="-1" hidden="0" type="field" name="ANON"/>
+      <column width="-1" hidden="0" type="field" name="DUPLICATE"/>
+      <column width="-1" hidden="0" type="field" name="SPLAY"/>
     </columns>
   </attributetableconfig>
-  <editform></editform>
+  <editform>.</editform>
   <editforminit/>
   <editforminitcodesource>0</editforminitcodesource>
-  <editforminitfilepath></editforminitfilepath>
+  <editforminitfilepath>.</editforminitfilepath>
   <editforminitcode><![CDATA[# -*- coding: utf-8 -*-
 """
 QGIS forms can have a Python function that is called when the form is
@@ -313,13 +340,19 @@ def my_form_open(dialog, layer, feature):
   </conditionalstyles>
   <defaults>
     <default field="NAME" expression=""/>
+    <default field="ELEVATION" expression=""/>
+    <default field="STYLE" expression=""/>
+    <default field="DATE1" expression=""/>
+    <default field="DATE2" expression=""/>
+    <default field="NLEGS" expression=""/>
+    <default field="LENGTH" expression=""/>
+    <default field="ERROR" expression=""/>
+    <default field="ERROR_HORIZ" expression=""/>
+    <default field="ERROR_VERT" expression=""/>
     <default field="SURFACE" expression=""/>
-    <default field="UNDERGROUND" expression=""/>
-    <default field="ENTRANCE" expression=""/>
-    <default field="EXPORTED" expression=""/>
-    <default field="FIXED" expression=""/>
-    <default field="ANON" expression=""/>
+    <default field="DUPLICATE" expression=""/>
+    <default field="SPLAY" expression=""/>
   </defaults>
   <previewExpression></previewExpression>
-  <layerGeometryType>0</layerGeometryType>
+  <layerGeometryType>1</layerGeometryType>
 </qgis>

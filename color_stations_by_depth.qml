@@ -1,18 +1,43 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="2.18.15" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
-  <edittypes/>
-  <renderer-v2 attr="z($geometry)" forceraster="0" symbollevels="0" type="graduatedSymbol" graduatedMethod="GraduatedColor" enableorderby="0">
+<qgis version="2.18.16" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
+  <edittypes>
+    <edittype widgetv2type="TextEdit" name="NAME">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ELEVATION">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="SURFACE">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="UNDERGROUND">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ENTRANCE">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="EXPORTED">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="FIXED">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="ANON">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+  </edittypes>
+  <renderer-v2 attr="ELEVATION" forceraster="0" symbollevels="0" type="graduatedSymbol" graduatedMethod="GraduatedColor" enableorderby="0">
     <ranges>
-      <range render="true" symbol="0" lower="325.850000000000023" upper="339.165000000000020" label=" 326 - 339 "/>
-      <range render="true" symbol="1" lower="339.165000000000020" upper="352.480000000000018" label=" 339 - 352 "/>
-      <range render="true" symbol="2" lower="352.480000000000018" upper="365.795000000000016" label=" 352 - 366 "/>
-      <range render="true" symbol="3" lower="365.795000000000016" upper="379.110000000000014" label=" 366 - 379 "/>
-      <range render="true" symbol="4" lower="379.110000000000014" upper="392.425000000000011" label=" 379 - 392 "/>
-      <range render="true" symbol="5" lower="392.425000000000011" upper="405.740000000000009" label=" 392 - 406 "/>
-      <range render="true" symbol="6" lower="405.740000000000009" upper="419.055000000000007" label=" 406 - 419 "/>
-      <range render="true" symbol="7" lower="419.055000000000007" upper="432.370000000000005" label=" 419 - 432 "/>
-      <range render="true" symbol="8" lower="432.370000000000005" upper="445.685000000000002" label=" 432 - 446 "/>
-      <range render="true" symbol="9" lower="445.685000000000002" upper="459.000000000000000" label=" 446 - 459 "/>
+      <range render="true" symbol="0" lower="325.850000000000023" upper="333.365000000000009" label=" 326 - 333 "/>
+      <range render="true" symbol="1" lower="333.365000000000009" upper="340.879999999999995" label=" 333 - 341 "/>
+      <range render="true" symbol="2" lower="340.879999999999995" upper="348.394999999999982" label=" 341 - 348 "/>
+      <range render="true" symbol="3" lower="348.394999999999982" upper="355.909999999999968" label=" 348 - 356 "/>
+      <range render="true" symbol="4" lower="355.909999999999968" upper="363.424999999999955" label=" 356 - 363 "/>
+      <range render="true" symbol="5" lower="363.424999999999955" upper="370.939999999999941" label=" 363 - 371 "/>
+      <range render="true" symbol="6" lower="370.939999999999941" upper="378.454999999999927" label=" 371 - 378 "/>
+      <range render="true" symbol="7" lower="378.454999999999927" upper="385.969999999999914" label=" 378 - 386 "/>
+      <range render="true" symbol="8" lower="385.969999999999914" upper="393.484999999999900" label=" 386 - 393 "/>
+      <range render="true" symbol="9" lower="393.484999999999900" upper="401.000000000000000" label=" 393 - 401 "/>
     </ranges>
     <symbols>
       <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
@@ -270,7 +295,7 @@
     <mode name="equal"/>
     <rotation/>
     <sizescale scalemethod="diameter"/>
-    <labelformat format=" %1 - %2 " trimtrailingzeroes="false" decimalplaces="0"/>
+    <labelformat format=" %1 - %2 " trimtrailingzeroes="false" decimalplaces="1"/>
   </renderer-v2>
   <labeling type="simple"/>
   <customproperties>
@@ -419,7 +444,7 @@
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield></displayfield>
+  <displayfield>NAME</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -470,13 +495,30 @@
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
-  <aliases/>
+  <aliases>
+    <alias field="NAME" index="0" name=""/>
+    <alias field="ELEVATION" index="1" name=""/>
+    <alias field="SURFACE" index="2" name=""/>
+    <alias field="UNDERGROUND" index="3" name=""/>
+    <alias field="ENTRANCE" index="4" name=""/>
+    <alias field="EXPORTED" index="5" name=""/>
+    <alias field="FIXED" index="6" name=""/>
+    <alias field="ANON" index="7" name=""/>
+  </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="593835128">
+  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
     <columns>
       <column width="-1" hidden="1" type="actions"/>
+      <column width="-1" hidden="0" type="field" name="NAME"/>
+      <column width="-1" hidden="0" type="field" name="ELEVATION"/>
+      <column width="-1" hidden="0" type="field" name="SURFACE"/>
+      <column width="-1" hidden="0" type="field" name="UNDERGROUND"/>
+      <column width="-1" hidden="0" type="field" name="ENTRANCE"/>
+      <column width="-1" hidden="0" type="field" name="EXPORTED"/>
+      <column width="-1" hidden="0" type="field" name="FIXED"/>
+      <column width="-1" hidden="0" type="field" name="ANON"/>
     </columns>
   </attributetableconfig>
   <editform></editform>
@@ -507,7 +549,16 @@ def my_form_open(dialog, layer, feature):
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <defaults/>
+  <defaults>
+    <default field="NAME" expression=""/>
+    <default field="ELEVATION" expression=""/>
+    <default field="SURFACE" expression=""/>
+    <default field="UNDERGROUND" expression=""/>
+    <default field="ENTRANCE" expression=""/>
+    <default field="EXPORTED" expression=""/>
+    <default field="FIXED" expression=""/>
+    <default field="ANON" expression=""/>
+  </defaults>
   <previewExpression></previewExpression>
   <layerGeometryType>0</layerGeometryType>
 </qgis>

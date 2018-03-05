@@ -1,7 +1,11 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis version="2.18.16" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
-  <edittypes/>
-  <renderer-v2 attr="0.5*(z(point_n($geometry,1))+z(point_n($geometry,3)))" forceraster="0" symbollevels="0" type="graduatedSymbol" graduatedMethod="GraduatedColor" enableorderby="0">
+  <edittypes>
+    <edittype widgetv2type="TextEdit" name="ELEVATION">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+  </edittypes>
+  <renderer-v2 attr="ELEVATION" forceraster="0" symbollevels="0" type="graduatedSymbol" graduatedMethod="GraduatedColor" enableorderby="1">
     <ranges>
       <range render="true" symbol="0" lower="357.445000000000050" upper="359.367000000000075" label=" 357.4 - 359.4 "/>
       <range render="true" symbol="1" lower="359.367000000000075" upper="361.289000000000101" label=" 359.4 - 361.3 "/>
@@ -170,7 +174,7 @@
       <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
         <layer pass="0" class="SimpleFill" locked="0">
           <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="color" v="172,124,131,255"/>
+          <prop k="color" v="249,185,56,255"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="offset" v="0,0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
@@ -194,6 +198,9 @@
     <rotation/>
     <sizescale scalemethod="diameter"/>
     <labelformat format=" %1 - %2 " trimtrailingzeroes="false" decimalplaces="1"/>
+    <orderby>
+      <orderByClause asc="1" nullsFirst="0">"ELEVATION"</orderByClause>
+    </orderby>
   </renderer-v2>
   <labeling type="simple"/>
   <customproperties>
@@ -342,7 +349,7 @@
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield></displayfield>
+  <displayfield>ELEVATION</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -393,12 +400,15 @@
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
-  <aliases/>
+  <aliases>
+    <alias field="ELEVATION" index="0" name=""/>
+  </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="270790880">
     <columns>
+      <column width="-1" hidden="0" type="field" name="ELEVATION"/>
       <column width="-1" hidden="1" type="actions"/>
     </columns>
   </attributetableconfig>
@@ -430,7 +440,9 @@ def my_form_open(dialog, layer, feature):
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <defaults/>
+  <defaults>
+    <default field="ELEVATION" expression=""/>
+  </defaults>
   <previewExpression></previewExpression>
   <layerGeometryType>2</layerGeometryType>
 </qgis>
