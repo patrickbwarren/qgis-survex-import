@@ -92,13 +92,13 @@ checked.
 
 Passage walls (as line strings), polygons, and cross sections (as
 lines) are computed from the left and right measurements in the LRUD
-data almost identically to the way that `aven` does it to show
+data almost identically to the way that `aven` displays
 'tubes'.  The direction of travel (bearing) is worked out, and used to
 compute the positions of points on the left and right passage walls.
 These wall points are then assembled into the desired features (walls,
 polygons, cross sections).
 
-In the plugin, the direction of travel is inferred from the directions
+The direction of travel is inferred from the directions
 of the two legs on either side of the given station (with special
 treatment for stations at the start and end of a traverse).  In
 averaging these, either the legs can be weighted equally (except true
@@ -107,22 +107,24 @@ cosine of the inclination computed from the processed data (not the
 actual clino reading).  The former is the default, and the latter
 corresponds to checking the 'use clino weights' box in the import
 dialog.  This alternative option downplays the significance of the
-occasional steeply inclined leg in an otherwise horizontal passage for
+occasional steeply inclined leg in an otherwise horizontal passage.
+
+One might want to do this for
 the following reasons.  In the 'good old days' steeply inclined legs
-were usually avoided as they are difficult to sight a compass along;
+were usually avoided as they are difficult to sight a compass along, and
 instead good practice was to keep legs mostly horizontal and add in
 the occasional plumbed leg when dealing with rough ground.  Also
 pitches were nearly always plumbed.  This meant that inferring passage
-direction by ignoring plumbed legs was most likely correct.  For
+direction as a simple average, ignoring plumbed legs, was most likely correct.  For
 modern surveying with digital instruments, this is no longer
 the case: there is no loss of accuracy for steeply inclined legs, and
 shining a laser down a pitch at an off-vertical angle is no problem.
 Therefore, the 'use clino weights' option has been invented to give
 such steeply included legs less weight when inferring the passage
 direction.  Note that in a steeply inclined _passage_, all legs are
-likely inclined at about the same angle, and therefore roughly equally
+likely roughly equally inclined, and therefore roughly equally
 weighted, so using clino weights doesn't affect the inferred
-direction of travel in this situation.
+direction of travel in that situation.
 
 _TL;DR: if in doubt try first with the 'use clino weights' option selected._
 
@@ -144,10 +146,11 @@ are not automatically updated to match the vertical range of the
 current data set, but these can be refreshed by clicking on 'Classify'
 (then 'Apply' to see the changes).
 
-Two versions of the colour-by-depth style files are provided: those
-that are tagged `_using_expression` colour a simple marker (line, or
-fill) using an expression that maps the depth to a spectral colour
-ramp.  There are no ranges here, but rather these `.qml` files rely on
+Alternate versions of the colour-by-depth style files are provided
+tagged `_using_expression`.  Instead of a graduated colour scheme, 
+these use a simple marker (line, or
+fill) with the colour set by an expression that maps the depth to a spectral colour
+ramp.  There are no ranges here, but rather these styles rely on
 `zmin` and `zmax` variables being set (see 'Variables' tab under layer
 &rarr; Properties).  By matching `zmin` and `zmax` between layers with
 these styles, one can be assured that a common colouring scheme is
