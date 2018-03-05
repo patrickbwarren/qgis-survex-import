@@ -308,7 +308,6 @@ class SurvexImport:
             exclude_surface_stations = not self.dlg.checkStationsSurface.isChecked()
 
             use_clino_wgt = self.dlg.checkClinoWeights.isChecked()
-            use_polygonz = self.dlg.checkPolygonZ.isChecked()
 
             get_crs = self.dlg.checkGetCRS.isChecked()
 
@@ -462,7 +461,8 @@ class SurvexImport:
 
             # Now create the layers in QGIS.  Attributes are inserted
             # like pushing onto a stack, so in reverse order.  Layers
-            # are created only if required and data is avaiable.
+            # are created only if required and data is available.
+            # If nlehv is not None, then error data has been provided.
 
             if include_legs and self.leg_list:
                 
@@ -617,6 +617,7 @@ class SurvexImport:
                     # The walls as line strings
 
                     for wall in (left_wall, right_wall):
+                        
                         points = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in wall]
                         linestring = QgsLineStringV2()
                         linestring.setPoints(points)
@@ -669,30 +670,30 @@ class SurvexImport:
 
                 layers = []
 
-                attrs = [QgsField('ELEVATION', QVariant.Double)]
+                attrs = [QgsField('ELEVATION', QVariant.Double)] # common to all
 
-                if include_polygons:
+                if include_polygons and quad_features:
                     quads_layer = self.add_layer(title, 'polygons', 'MultiPolygon', epsg)
                     quads_layer.dataProvider().addAttributes(attrs)
                     quads_layer.updateFields()
                     quads_layer.dataProvider().addFeatures(quad_features)
                     layers.append(quads_layer)
                     
-                if include_walls:
+                if include_walls and wall_features:
                     walls_layer = self.add_layer(title, 'walls', 'LineString', epsg)
                     walls_layer.dataProvider().addAttributes(attrs)
                     walls_layer.updateFields()
                     walls_layer.dataProvider().addFeatures(wall_features)
                     layers.append(walls_layer)
 
-                if include_xsections:
+                if include_xsections and xsect_features:
                     xsects_layer = self.add_layer(title, 'xsections', 'LineString', epsg)
                     xsects_layer.dataProvider().addAttributes(attrs)
                     xsects_layer.updateFields()
                     xsects_layer.dataProvider().addFeatures(xsect_features)
                     layers.append(xsects_layer)
 
-                if include_traverses:
+                if include_traverses and trav_features:
                     travs_layer = self.add_layer(title, 'traverses', 'LineString', epsg)
                     travs_layer.dataProvider().addAttributes(attrs)
                     travs_layer.updateFields()
