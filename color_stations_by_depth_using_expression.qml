@@ -201,8 +201,8 @@
       <value>zmin</value>
     </property>
     <property key="variableValues">
-      <value>190</value>
-      <value>120</value>
+      <value>400</value>
+      <value>250</value>
     </property>
   </customproperties>
   <blendMode>0</blendMode>
