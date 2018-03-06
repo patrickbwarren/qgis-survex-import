@@ -5,10 +5,10 @@ typically by survex &ge; 1.2.14._
 
 ### Features
 
-* no dependencies, natively reads binary .3d files;
-* imports stations, and legs, with full metadata;
-* imports z-dimension (altitude) data;
-* creates passage walls, cross-sections, and polygons from LRUD data;
+* no dependencies, natively reads binary .3d files ;
+* imports stations, and legs, with full metadata ;
+* features carry _z_ dimension (elevation) data ;
+* creates passage walls, cross-sections, and polygons from LRUD data ;
 * CRS can be set from PROJ.4 string embedded in .3d file.
 
 ### Installation
@@ -31,13 +31,13 @@ When installed, a menu item 'Import .3d file' should appear on the
 Selecting 'Import .3d file' (or clicking on the .3d icon) brings up a
 window for the user to select a .3d file with a number of options:
 
-* Import legs, with options to include splay, duplicate, and surface legs;
-* Import stations, with the option to include surface stations (\*);
+* Import legs, with options to include splay, duplicate, and surface legs ;
+* Import stations, with the option to include surface stations (\*) ;
 * Import passage data, with the option to use clino weights (see below):
-    - as polygons, computed from L+R in LRUD data;
-    - as walls, ditto;
-    - as cross sections, ditto;
-    - as traverses, showing the centrelines used for above;
+    - as polygons, computed from L+R in LRUD data ;
+    - as walls, _ditto_ ;
+    - as cross sections, _ditto_ ;
+    - as traverses, showing the centrelines used for above ;
 * Get CRS from .3d file if possible.
   
 (\*) In rare cases a station may be flagged both surface and underground,
@@ -49,9 +49,12 @@ features as desired.  Note that athough legs, walls, cross sections,
 and traverses are all line strings, they are imported as separate
 vector layers for convenience.
 
-Passage data layers (polygons, walls, cross sections, and traverses)
-are created without any attributes.  For station and leg layers, the
-following attribute fields that are created:
+All layers are created with an ELEVATION attribute, for convenience.
+For stations this is the just the _z_ dimension.  For all
+other features it is the mean elevation.
+
+For station and leg layers, the following additional attribute fields
+that are created:
 
 * stations: NAME, and flags SURFACE, UNDERGROUND, ENTRANCE, EXPORTED,
   FIXED, ANON
@@ -63,9 +66,9 @@ following attribute fields that are created:
 file, which is only generated (by survex) if loop closures are present.
 
 The flag fields are integer fields set to 0 or 1.  For the leg data,
-the style is one of NORMAL, DIVING, CARTESIAN, CYLPOLAR, or NOSURVEY,
-and the date fields are either the same, or represent a date range, in
-the standard QGIS format YYYY-MM-DD.
+the style is one of NORMAL, DIVING, CARTESIAN, CYLPOLAR, or NOSURVEY.
+The DATE1 and DATE2 fields are either the same, or represent a date
+range, in the standard QGIS format YYYY-MM-DD.
 
 For the most part importing the CRS from the .3d file should work as
 expected if the survey data has been georeferenced using the survex
@@ -74,26 +77,21 @@ this option and set the CRS by hand.  To maximise the likelihood that
 CRS import works as expected, use an EPSG code in the `*cs out` survex
 command rather than a PROJ.4 string.
 
-There is one point to bear in mind regarding the elevation data.
+There is one point to bear in mind regarding the _z_ dimension data.
 Because of the (current) limitations in QGIS for creating vector
 layers in memory, the layer type does not explicitly know that the
-features include z-dimension (elevation) data.  To work around this
-one can save the layer to a shapefile, for example to an ESRI
-Shapefile or a GeoPackage file.  In QGIS this usually results in the
-saved shapefile automatically being loaded as a new vector layer, but
-of course one can also explicitly load the new shapefile.  To ensure
-the z-dimension data is correctly incorporated when saving to a
-shapefile, in the 'Save as ...'  dialog make sure that the geometry
-type is specified (eg for legs this should be 'LineString', and for
-stations it should be 'Point') and the 'Include z-dimension' box is
-checked.
+features include _z_ dimensions.  To ensure the _z_ dimension data is
+correctly incorporated when saving to a shapefile, in the 'Save as
+...'  dialog make sure that the geometry type is specified (eg for
+legs this should be 'LineString', and for stations it should be
+'Point') and the 'Include _z_ dimension' box is checked.
 
-#### Passage data
+#### Passage walls
 
 Passage walls (as line strings), polygons, and cross sections (as
 lines) are computed from the left and right measurements in the LRUD
-data almost identically to the way that `aven` displays
-'tubes'.  The direction of travel (bearing) is worked out, and used to
+data in the same way that `aven` uses to display passage
+'tubes' (well, near enough...).  The direction of travel (bearing) is worked out, and used to
 compute the positions of points on the left and right passage walls.
 These wall points are then assembled into the desired features (walls,
 polygons, cross sections).
@@ -109,22 +107,22 @@ corresponds to checking the 'use clino weights' box in the import
 dialog.  This alternative option downplays the significance of the
 occasional steeply inclined leg in an otherwise horizontal passage.
 
-One might want to do this for
-the following reasons.  In the 'good old days' steeply inclined legs
-were usually avoided as they are difficult to sight a compass along, and
-instead good practice was to keep legs mostly horizontal and add in
-the occasional plumbed leg when dealing with rough ground.  Also
-pitches were nearly always plumbed.  This meant that inferring passage
-direction as a simple average, ignoring plumbed legs, was most likely correct.  For
-modern surveying with digital instruments, this is no longer
-the case: there is no loss of accuracy for steeply inclined legs, and
-shining a laser down a pitch at an off-vertical angle is no problem.
-Therefore, the 'use clino weights' option has been invented to give
-such steeply included legs less weight when inferring the passage
-direction.  Note that in a steeply inclined _passage_, all legs are
-likely roughly equally inclined, and therefore roughly equally
-weighted, so using clino weights doesn't affect the inferred
-direction of travel in that situation.
+One might want to do this for the following reasons.  In the 'good old
+days' steeply inclined legs were usually avoided as they are difficult
+to sight a compass along, and instead good practice was to keep legs
+mostly horizontal and add in the occasional plumbed leg when dealing
+with rough ground.  Also pitches were nearly always plumbed.  This
+meant that inferring passage direction as a simple average, ignoring
+plumbed legs, was most likely correct.  For modern surveying with
+digital instruments, this is no longer the case: there is no loss of
+accuracy for steeply inclined legs, and shining a laser down a pitch
+at an off-vertical angle is no problem.  Therefore, the 'use clino
+weights' option has been invented to give such steeply included legs
+less weight when inferring the passage direction.  Note that in a
+steeply inclined _passage_, all legs are likely roughly equally
+inclined, and therefore roughly equally weighted, so using clino
+weights doesn't affect the inferred direction of travel in that
+situation.
 
 _TL;DR: if in doubt try first with the 'use clino weights' option selected._
 
@@ -133,30 +131,35 @@ _TL;DR: if in doubt try first with the 'use clino weights' option selected._
 Once the data is in QGIS one can do various things with it.
 
 For example, regardless of the above comments about saving with
-z-dimension data, features (stations, legs, polygons) can be coloured
-by depth (altitude) to mimic the behaviour of the `aven` viewer in
-survex (hat tip Julian Todd for figuring some of this out).  The
-easiest way to do this is to use the `.qml` style files provided in
-this repository.  For example to colour legs by depth, open the
-properties dialog and under the 'Style' tab, at the bottom select
-'Style &rarr; Load Style', then choose the `color_legs_by_depth.qml`
-style file.  This will apply a graduated colour scheme with an
-inverted spectral colour ramp.  A small limitation is that the ranges
-are not automatically updated to match the vertical range of the
-current data set, but these can be refreshed by clicking on 'Classify'
-(then 'Apply' to see the changes).
+_z_ dimension data, features (stations, legs, polygons) can be coloured
+by elevation to mimic the behaviour of the `aven` viewer in survex
+(hat tip Julian Todd for figuring some of this out).  The easiest way
+to do this is to use the `.qml` style files provided in this
+repository.  For example to colour legs by depth, open the properties
+dialog and under the 'Style' tab, at the bottom select 'Style &rarr;
+Load Style', then choose one of the `colour_lines_by_elevation*.qml`
+style files.  This will apply a colour scheme to the ELEVATION field
+data with an inverted spectral colour ramp.  Use `lines` for legs,
+walls, cross sections and traverses; `points` for stations; and
+`polygons` for polygons.
 
-Alternate versions of the colour-by-depth style files are provided
-tagged `_using_expression`.  Instead of a graduated colour scheme, 
-these use a simple marker (line, or
-fill) with the colour set by an expression that maps the depth to a spectral colour
-ramp.  There are no ranges here, but rather these styles rely on
-`zmin` and `zmax` variables being set (see 'Variables' tab under layer
-&rarr; Properties).  By matching `zmin` and `zmax` between layers with
-these styles, one can be assured that a common colouring scheme is
-being applied.  A handy way to choose values for `zmin` and `zmax` is
-to first use one of the above graduated colour schemes to check the
-range of depths.
+Two versions of these style files are provided.
+
+The first version uses a graduated, inverted spectral colour ramp to colour ranges of
+ELEVATION.  A small limitation is that these ranges are not
+automatically updated to match the vertical range of the current data
+set, but these can be refreshed by clicking on 'Classify' (then
+'Apply' to see the changes).
+
+The second version uses a simple marker (line, or fill) with the
+colour set by an expression that maps the ELEVATION to a spectral
+colour ramp.  There are no ranges here, but rather these styles rely
+on _zmin_ and _zmax_ variables being set (see 'Variables' tab under
+layer &rarr; Properties).  By matching _zmin_ and _zmax_ between layers
+with these styles, one can be assured that a common colouring scheme
+is being applied.  A handy way to choose values for _zmin_ and _zmax_ is
+to open the statistics panel (View &rarr; Panels &rarr; Statistics
+Panel) to check out the min and max values in the ELEVATION field.
 
 Colour legs by date is possible using an expression like
 `day(age("DATE1",'1970-01-01'))` (which gives the number of days
@@ -168,18 +171,20 @@ NAME field.  Then, hovering the mouse near a station (or leg) will
 show the name as a pop-up label.  For this to work:
 
 * 'View &rarr; Map Tips' should be checked in the main menu;
-* the map tip has to be set up to use the NAME field ('Properties &rarr; Display') in the relevant layer;
-* the layer has to be the currently _selected_ one, though it does not have to be displayed.
+* the map tip has to be set up to use the NAME field
+  ('Properties &rarr; Display') in the relevant layer;
+* the layer has to be the currently _selected_ one, though
+  it does not have to be displayed.
 
 With a _digital elevation model_ (DEM raster layer) even more
 interesting things can be done.  For example one can use the 'Raster
 Interpolation' plugin to find the surface elevation at all the
 imported stations (to do this, first create a field to hold the
 numerical result, then run the plugin).  Then, one can use the
-built-in field calculator to make another field containing the _depth
-below surface_, as the surface elevation minus the z-dimension of the
-station, `z($geometry)`.  Stations can be coloured by this, or the
-information can be added to the 'map tip', etc.
+built-in field calculator to make a DEPTH field containing the depth
+below surface, as the surface elevation minus the ELEVATION field.
+Stations can be coloured by this, or the information can be added to
+the 'map tip', etc.
 
 Sample georeferenced survey data can be found in
 [`DowProv.3d`](DowProv/DowProv.3d).
