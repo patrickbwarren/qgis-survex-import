@@ -127,6 +127,9 @@ situation.
 
 _TL;DR: if in doubt try first with the 'use clino weights' option selected._
 
+Note that the passage wall data here is _inferred_ and any resemblence to 
+reality may be pure coincidence.  If in doubt, use splays!
+
 ### What to do next
 
 Once the data is in QGIS one can do various things with it.
