@@ -6,9 +6,9 @@ typically by survex &ge; 1.2.14._
 ### Features
 
 * no dependencies, natively reads binary .3d files ;
-* imports stations, and legs, with full metadata ;
+* import stations and legs with full metadata ;
 * features carry _z_ dimension (elevation) data ;
-* creates passage walls, cross-sections, and polygons from LRUD data ;
+* create passage walls, cross-sections, and polygons from LRUD data ;
 * CRS can be set from PROJ.4 string embedded in .3d file.
 
 ### Installation
