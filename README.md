@@ -80,7 +80,7 @@ The flags are integer fields set to 0 or 1.
 For the leg data, the style is one of NORMAL, DIVING, CARTESIAN,
 CYLPOLAR, or NOSURVEY.
 
-The DATE1 and DATE2 fields for leg data are either the same, or represent a date
+Also for leg data, the date fields are either the same, or represent a date
 range, in the standard QGIS format YYYY-MM-DD.
 
 For the most part importing the CRS from the .3d file should work as
