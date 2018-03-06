@@ -77,10 +77,10 @@ file, which is only generated (by survex) if loop closures are present.
 
 The flags are integer fields set to 0 or 1.
 
-For the leg data, the style is one of NORMAL, DIVING, CARTESIAN,
+The STYLE field in the leg data is one of NORMAL, DIVING, CARTESIAN,
 CYLPOLAR, or NOSURVEY.
 
-Also for leg data, the date fields are either the same, or represent a date
+The DATE fields in the leg data are either the same, or represent a date
 range, in the standard QGIS format YYYY-MM-DD.
 
 For the most part importing the CRS from the .3d file should work as
