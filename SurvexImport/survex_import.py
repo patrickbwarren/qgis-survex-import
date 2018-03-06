@@ -57,6 +57,7 @@ class SurvexImport:
     station_list = []
     station_xyz = {}
     xsect_list = []
+    title = ''
 
     def __init__(self, iface):
         """Constructor.
@@ -242,10 +243,10 @@ class SurvexImport:
     # Note that 'PointZ', 'LineStringZ', 'PolygonZ' are not possible
     # in QGIS 2.18 However the z-dimension data is respected.
 
-    def add_layer(self, title, subtitle, geom, epsg):
+    def add_layer(self, subtitle, geom, epsg):
         """Add a memory layer with title and geom 'Point' or 'LineString'"""
         uri = '%s?crs=epsg:%i' % (geom, epsg) if epsg else geom
-        name = '%s - %s' % (title, subtitle) if title else subtitle
+        name = '%s - %s' % (self.title, subtitle) if self.title else subtitle
         layer =  QgsVectorLayer(uri, name, 'memory')
         if not layer.isValid():
             raise Exception("Invalid layer with %s" % uri)
@@ -285,11 +286,6 @@ class SurvexImport:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-                        
-            self.leg_list = []
-            self.station_list = []
-            self.station_xyz = {}
-            self.xsect_list = []
 
             # This is where all the work is done.
 
@@ -309,7 +305,15 @@ class SurvexImport:
 
             use_clino_wgt = self.dlg.checkClinoWeights.isChecked()
 
+            discard_features = not self.dlg.checkKeepFeatures.isChecked()
+            
             get_crs = self.dlg.checkGetCRS.isChecked()
+
+            if discard_features:
+                self.leg_list = []
+                self.station_list = []
+                self.station_xyz = {}
+                self.xsect_list = []
 
             if not os.path.exists(survex3dfile):
                 raise Exception("File '%s' doesn't exist" % survex3dfile)
@@ -334,7 +338,9 @@ class SurvexImport:
 
                 line = fp.readline().rstrip() # Metadata (title and coordinate system)
                 fields = line.split(b'\x00')
-                title = fields[0]
+                
+                previous_title = '' if discard_features else self.title
+                self.title = previous_title + ' + ' + fields[0];
 
                 # Try to work out EPSG number from CS if available and asked-for
                 
@@ -466,7 +472,7 @@ class SurvexImport:
 
             if include_legs and self.leg_list:
                 
-                leg_layer = self.add_layer(title, 'legs', 'LineString', epsg)
+                leg_layer = self.add_layer('legs', 'LineString', epsg)
                 
                 attrs = [QgsField(self.leg_attr[k], QVariant.Int) for k in self.leg_flags]
                 if nlehv:
@@ -512,7 +518,7 @@ class SurvexImport:
 
             if include_stations and self.station_list:
                 
-                station_layer = self.add_layer(title, 'stations', 'Point', epsg)
+                station_layer = self.add_layer('stations', 'Point', epsg)
     
                 attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
                 attrs.insert(0, QgsField('ELEVATION', QVariant.Double))
@@ -557,7 +563,8 @@ class SurvexImport:
 
                     for label, lrud in xsect:
                         xyz = self.station_xyz[label] # look up coordinates from label
-                        centerline.append(xyz + lrud[0:2]) # and collect with LR data
+                        lr = tuple([max(0, v) for v in lrud[0:2]]) # clear missing LR data
+                        centerline.append(xyz + lr) # and collect as 5-uple
 
                     direction = [] # will contain the corresponding direction vectors
 
@@ -673,28 +680,28 @@ class SurvexImport:
                 attrs = [QgsField('ELEVATION', QVariant.Double)] # common to all
 
                 if include_polygons and quad_features:
-                    quads_layer = self.add_layer(title, 'polygons', 'MultiPolygon', epsg)
+                    quads_layer = self.add_layer('polygons', 'MultiPolygon', epsg)
                     quads_layer.dataProvider().addAttributes(attrs)
                     quads_layer.updateFields()
                     quads_layer.dataProvider().addFeatures(quad_features)
                     layers.append(quads_layer)
                     
                 if include_walls and wall_features:
-                    walls_layer = self.add_layer(title, 'walls', 'LineString', epsg)
+                    walls_layer = self.add_layer('walls', 'LineString', epsg)
                     walls_layer.dataProvider().addAttributes(attrs)
                     walls_layer.updateFields()
                     walls_layer.dataProvider().addFeatures(wall_features)
                     layers.append(walls_layer)
 
                 if include_xsections and xsect_features:
-                    xsects_layer = self.add_layer(title, 'xsections', 'LineString', epsg)
+                    xsects_layer = self.add_layer('xsections', 'LineString', epsg)
                     xsects_layer.dataProvider().addAttributes(attrs)
                     xsects_layer.updateFields()
                     xsects_layer.dataProvider().addFeatures(xsect_features)
                     layers.append(xsects_layer)
 
                 if include_traverses and trav_features:
-                    travs_layer = self.add_layer(title, 'traverses', 'LineString', epsg)
+                    travs_layer = self.add_layer('traverses', 'LineString', epsg)
                     travs_layer.dataProvider().addAttributes(attrs)
                     travs_layer.updateFields()
                     travs_layer.dataProvider().addFeatures(trav_features)

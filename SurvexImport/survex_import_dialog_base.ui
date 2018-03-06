@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>418</width>
-    <height>309</height>
+    <width>442</width>
+    <height>346</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="button_box">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>260</y>
+     <x>80</x>
+     <y>300</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -45,7 +45,7 @@
   <widget class="QPushButton" name="fileSelector">
    <property name="geometry">
     <rect>
-     <x>370</x>
+     <x>350</x>
      <y>60</y>
      <width>31</width>
      <height>23</height>
@@ -60,7 +60,7 @@
     <rect>
      <x>10</x>
      <y>60</y>
-     <width>351</width>
+     <width>331</width>
      <height>23</height>
     </rect>
    </property>
@@ -112,7 +112,7 @@
   <widget class="QCheckBox" name="checkLegsSurface">
    <property name="geometry">
     <rect>
-     <x>330</x>
+     <x>320</x>
      <y>100</y>
      <width>71</width>
      <height>21</height>
@@ -138,7 +138,7 @@
   <widget class="QCheckBox" name="checkLegsDuplicate">
    <property name="geometry">
     <rect>
-     <x>230</x>
+     <x>220</x>
      <y>100</y>
      <width>90</width>
      <height>21</height>
@@ -151,7 +151,7 @@
   <widget class="QCheckBox" name="checkStationsSurface">
    <property name="geometry">
     <rect>
-     <x>330</x>
+     <x>320</x>
      <y>130</y>
      <width>71</width>
      <height>21</height>
@@ -165,13 +165,13 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>270</y>
-     <width>131</width>
+     <y>300</y>
+     <width>261</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
-    <string>Get CRS from file</string>
+    <string>Get CRS from file, if possible</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="checkWalls">
@@ -197,7 +197,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>use clino weights</string>
+    <string>Use clino weights</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -257,6 +257,19 @@
    </property>
    <property name="text">
     <string>Polygons</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkKeepFeatures">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>270</y>
+     <width>271</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Keep features from previous import(s)</string>
    </property>
   </widget>
  </widget>

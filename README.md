@@ -38,6 +38,7 @@ window for the user to select a .3d file with a number of options:
     - as walls, _ditto_ ;
     - as cross sections, _ditto_ ;
     - as traverses, showing the centrelines used for above ;
+* Keep features from previous import(s) ;
 * Get CRS from .3d file if possible.
   
 (\*) In rare cases a station may be flagged both surface and underground,
@@ -45,9 +46,18 @@ in which case it is imported even if the 'surface' option is left
 unchecked.
 
 On clicking OK, vector layers are created to contain the imported
-features as desired.  Note that although legs, walls, cross sections,
-and traverses are all line strings, they are imported as separate
-vector layers for convenience.
+features as desired.
+
+Note that legs, walls, cross sections, and traverses are imported as
+separate vector layers for convenience.
+
+If 'keep features' is selected, then previously imported features are
+not discarded, and the newly-created layers will contain both the
+previously imported features plus any new features imported from the
+designated .3d file.  This choice allows processed survey data sets to
+be combined from multiple data sources (multiple .3d files).  Note
+that cumulative imports do not result in features being overwritten, even if they
+happen to share the same name: all features are assigned a unique ID.
 
 All layers are created with an ELEVATION attribute, for convenience.
 For stations this is the just the _z_ dimension.  For all
@@ -65,9 +75,12 @@ that are created:
 (\*) These fields correspond to the error data reported in the .3d
 file, which is only generated (by survex) if loop closures are present.
 
-The flags are integer fields set to 0 or 1.  For the leg data,
-the style is one of NORMAL, DIVING, CARTESIAN, CYLPOLAR, or NOSURVEY.
-The DATE1 and DATE2 fields are either the same, or represent a date
+The flags are integer fields set to 0 or 1.
+
+For the leg data, the style is one of NORMAL, DIVING, CARTESIAN,
+CYLPOLAR, or NOSURVEY.
+
+The DATE1 and DATE2 fields for leg data are either the same, or represent a date
 range, in the standard QGIS format YYYY-MM-DD.
 
 For the most part importing the CRS from the .3d file should work as
@@ -183,10 +196,10 @@ show the name as a pop-up label.  For this to work:
 With a _digital elevation model_ (DEM raster layer) even more
 interesting things can be done.  For example one can use the 'Raster
 Interpolation' plugin to find the surface elevation at all the
-imported stations (to do this, first create a SURFACE field to hold the
+imported stations (to do this, first create a SURFACE_ELEV field to hold the
 numerical result, then run the plugin).  Then, one can use the
 built-in field calculator to make a DEPTH field containing the depth
-below surface, as SURFACE minus ELEVATION.
+below surface, as SURFACE_ELEV minus ELEVATION.
 Stations can be coloured by this, or the information can be added to
 the 'map tip', etc.
 
