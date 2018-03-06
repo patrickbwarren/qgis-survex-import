@@ -45,7 +45,7 @@ in which case it is imported even if the 'surface' option is left
 unchecked.
 
 On clicking OK, vector layers are created to contain the imported
-features as desired.  Note that athough legs, walls, cross sections,
+features as desired.  Note that although legs, walls, cross sections,
 and traverses are all line strings, they are imported as separate
 vector layers for convenience.
 
@@ -65,7 +65,7 @@ that are created:
 (\*) These fields correspond to the error data reported in the .3d
 file, which is only generated (by survex) if loop closures are present.
 
-The flag fields are integer fields set to 0 or 1.  For the leg data,
+The flags are integer fields set to 0 or 1.  For the leg data,
 the style is one of NORMAL, DIVING, CARTESIAN, CYLPOLAR, or NOSURVEY.
 The DATE1 and DATE2 fields are either the same, or represent a date
 range, in the standard QGIS format YYYY-MM-DD.
@@ -90,9 +90,9 @@ legs this should be 'LineString', and for stations it should be
 
 Passage walls (as line strings), polygons, and cross sections (as
 lines) are computed from the left and right measurements in the LRUD
-data in the same way that `aven` uses to display passage
+data in the same way that the `aven` viewer in survex displays passage
 'tubes' (well, near enough...).  The direction of travel (bearing) is worked out, and used to
-compute the positions of points on the left and right passage walls.
+compute the positions of points on the left and right hand passage walls.
 These wall points are then assembled into the desired features (walls,
 polygons, cross sections).
 
@@ -100,14 +100,15 @@ The direction of travel is inferred from the directions
 of the two legs on either side of the given station (with special
 treatment for stations at the start and end of a traverse).  In
 averaging these, either the legs can be weighted equally (except true
-plumbs which break the sequence), or the legs can be weighted by the
-cosine of the inclination computed from the processed data (not the
+plumbs which break the sequence), or the option is given to weight legs by 
+the cosine of the inclination 
+(computed from the processed data, not the
 actual clino reading).  The former is the default, and the latter
 corresponds to checking the 'use clino weights' box in the import
 dialog.  This alternative option downplays the significance of the
 occasional steeply inclined leg in an otherwise horizontal passage.
 
-One might want to do this for the following reasons.  In the 'good old
+One might want to do this for the following reason.  In the 'good old
 days' steeply inclined legs were usually avoided as they are difficult
 to sight a compass along, and instead good practice was to keep legs
 mostly horizontal and add in the occasional plumbed leg when dealing
@@ -121,7 +122,7 @@ weights' option has been invented to give such steeply included legs
 less weight when inferring the passage direction.  Note that in a
 steeply inclined _passage_, all legs are likely roughly equally
 inclined, and therefore roughly equally weighted, so using clino
-weights doesn't affect the inferred direction of travel in that
+weights shouldn't affect the inferred direction of travel in that
 situation.
 
 _TL;DR: if in doubt try first with the 'use clino weights' option selected._
@@ -179,10 +180,10 @@ show the name as a pop-up label.  For this to work:
 With a _digital elevation model_ (DEM raster layer) even more
 interesting things can be done.  For example one can use the 'Raster
 Interpolation' plugin to find the surface elevation at all the
-imported stations (to do this, first create a field to hold the
+imported stations (to do this, first create a SURFACE field to hold the
 numerical result, then run the plugin).  Then, one can use the
 built-in field calculator to make a DEPTH field containing the depth
-below surface, as the surface elevation minus the ELEVATION field.
+below surface, as SURFACE minus ELEVATION.
 Stations can be coloured by this, or the information can be added to
 the 'map tip', etc.
 
