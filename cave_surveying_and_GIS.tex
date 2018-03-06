@@ -1,20 +1,8 @@
 \documentclass[]{article}
 \usepackage{lmodern}
 \usepackage{amssymb,amsmath}
-\usepackage{ifxetex,ifluatex}
 \usepackage{color}
 \usepackage{fixltx2e} % provides \textsubscript
-\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
-  \usepackage[T1]{fontenc}
-  \usepackage[utf8]{inputenc}
-\else % if luatex or xelatex
-  \ifxetex
-    \usepackage{mathspec}
-  \else
-    \usepackage{fontspec}
-  \fi
-  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
-\fi
 % use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 % use microtype if available
@@ -185,7 +173,7 @@ check things, the WGS84 latitude and longitude in decimal degrees can
 be copied and pasted into Google maps for example, or for that matter
 directly into the Google search engine.
 
-Note there is a confusing difference between WGS84
+Note there is a confusing difference between the
 \href{https://en.wikipedia.org/wiki/Web_Mercator}{Web Mercator} often
 used for online maps, and the standard conformal Mercator projection.
 For this reason the US DoD has declared the Web Mercator projection
@@ -320,9 +308,9 @@ northing here (and elevation
 \href{https://en.wikipedia.org/wiki/Ordnance_datum}{ODN}) were obtained
 by field work. Then the file \verb}DowProv.svx} specifies input SRS is
 the SD square, and asks that the reduced data should be exported
-using the all-numeric British National Grid scheme, here codified with a
+using the all-numeric British National Grid scheme, here codified with 
 \href{http://spatialreference.org/}{European Petroleum Survey Group
-  (EPSG)} code, here \verb+EPSG:7405+.
+  (EPSG)} code \verb+EPSG:7405+.
 Using EPSG numbers avoids potential misunderstanding when
 importing into a GIS platform, for example in QGIS one can find the
 exact exported SRS easily enough by searching on the EPSG number.
@@ -420,18 +408,17 @@ some 30 years.
 
 \subsection{GIS import methods}\label{gis-import-methods}
 
-\subsubsection{Quick-and-dirty two dimensional (flat)
-import}\label{quick-and-dirty-two-dimensional-flat-import}
+\subsubsection{Quick-and-dirty import via DXF}\label{quick-and-dirty-two-dimensional-flat-import}
 
 The quickest way to get survey data into a GIS platform (QGIS) once the
 dataset has been georeferenced as just described is via the DXF file
 format, using the survex \verb}cad3d} tool, or exporting from
 \verb}aven}. One can load this DXF file into a GIS platform like QGIS.
-At present this direct route does not import \zdimension\ (elevation)
+At present this direct route does not neatly import \zdimension\ (elevation)
 data, but nevertheless could be useful as a quick and dirty way to throw
 for example a centreline onto a map.
 
-\subsubsection{Three dimensional import}\label{three-dimensional-import}
+\subsubsection{Import after conversion using GDAL}\label{three-dimensional-import}
 
 This import route requires command-line access to the
 \href{http://www.gdal.org/ogr_utilities.html}{GDAL utilities}.
@@ -465,89 +452,23 @@ ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf \
 
 The plugin provides a convenient route to import features (legs and
 stations) from a \verb}.3d} file, with \zdimension\ (elevation) and
-other metadata properly included.  Installation instructions can be
+other metadata properly included.
+
+Features include
+\begin{itemize}
+\tightlist
+\item no dependencies, natively reads binary .3d files ;
+\item import stations and legs with full metadata ;
+\item  features carry \zdimension\ (elevation) data ;
+\item  create passage walls, cross-sections, and polygons from LRUD data ;
+\item  CRS can be set from a PROJ.4 string embedded in \verb}.3d} file.
+\end{itemize}
+
+More details and installation instructions can be
 found in the 
-\href{https://github.com/patrickbwarren/qgis-survex-import}{README}.
+\href{https://github.com/patrickbwarren/qgis-survex-import}{repository}.
+Some additional import scripts can be found in the \verb}extra} subdirectory.
 
-When installed, a menu item `Import .3d file' should appear on the
-`Vector' drop-down menu in the main QGIS window, and (possibly) a
-.3d icon in a toolbar (if enabled).
-
-Selecting `Import .3d file' (or clicking on the .3d icon) brings up a
-window for the user to select a \verb+.3d+ file, and choose whether to
-import legs or stations, or both.  For the former (legs) additional
-options allow the user to choose whether to include splay, duplicate,
-and surface legs.  For the latter (stations) the user can choose
-whether to include surface stations.  Finally there is an option to
-import the CRS from the \verb+.3d+ file if possible.  On clicking OK,
-vector layers are created to contain the legs and stations as desired.
-Some attributes are also imported (perhaps most usefully, names).
-
-For the most part importing the CRS from the \verb+.3d+ file should work as
-expected if the survey data has been georeferenced using the survex
-\verb+*cs+ and \verb+*cs out+ commands.  If it doesn't, one can always uncheck
-this option and set the CRS by hand.  To maximise the likelihood that
-CRS import works as expected, use an EPSG code in the \verb+*cs out+ survex
-command rather than a PROJ.4 string.
-
-There is one point to bear in mind regarding the elevation data.
-Because of the (current) limitations in QGIS for creating vector
-layers in memory, the layer type does not explicitly know that the
-features include \zdimension\ (elevation) data.  To work around this
-one can save the layer to a shapefile, for example to an ESRI
-Shapefile or a GeoPackage file.  In QGIS this usually results in the
-saved shapefile automatically being loaded as a new vector layer, but
-of course one can also explicitly load the new shapefile.  To ensure
-the \zdimension\ data is correctly incorporated when saving to a
-shapefile, in the `Save as \dots'  dialog make sure that the geometry
-type is specified (for legs this should be `LineString', and for
-stations it should be `Point') and the `Include z-dimension' box is
-checked.
-
-Once the data is in QGIS one can do various things with it.  For
-example, regardless of the above comments about saving with
-\zdimension\ data, features (legs or stations) can be coloured by
-depth to mimic the behaviour of the \verb+aven+ viewer in survex (hat
-tip Julian Todd for figuring this out).  The easiest way to do this is
-to use the \verb+.qml+ style files provided in this repository.  For
-example to colour legs by depth, open the properties dialog and under
-the `Style' tab, at the bottom select `Style $\rightarrow$ Load
-Style', then choose the \verb}color_legs_by_depth.qml} style
-file. This will apply a graduated colour scheme with an inverted
-spectral colour ramp.  A small limitation is that the ranges are not
-automatically updated to match the vertical range of the current data
-set.  Refreshing this is trivial: simply fiddle with the number of
-`Classes' (box on right hand side of `Style' tab) and the ranges will
-update to match the current dataset.
-
-Another thing one can do is enable `map tips' using the \verb+NAME+ field.
-Then, hovering the mouse near a station (or leg) will show the name as a
-pop-up label.  Note that the relevant layer (\eg\ stations) does not
-have to be displayed for this to work (it has to be the active layer
-though).
-
-With a digital elevation model (DEM raster layer) one can use the
-`Raster Interpolation' plugin to find the surface elevation at all the
-imported stations (to do this, first create a field to hold the
-numerical result, then run the plugin).  Then, one can use the
-built-in field calculator to make another field containing the \emph{depth
-below surface}, as the surface elevation minus the \zdimension\ of the
-station, \verb+z($geometry)+.  This information can be displayed in the
-`map tip', \etc.
-
-\subsubsection{Other import scripts}\label{other-import-scripts}
-
-In the same
-\href{https://github.com/patrickbwarren/qgis-survex-import}{repository},
-under the \verb}extra} directory, the script \verb}import3d.py} is a
-stripped down version of the plugin which could be useful for testing
-and troubleshooting. It can be added as a user script to the
-Processing Toolbox.
-
-Also in the \verb}extra} directory,
-\verb}survex_import_with_tmpfile.py} is a slightly old version of
-the main plugin script which uses a temporary file to cache the output
-of \verb}dump3d}.
 
 \subsection{Georeferencing images, maps, and old
 surveys}\label{georeferencing-images-maps-and-old-surveys}
@@ -568,7 +489,8 @@ may help.
 
 \subsubsection{Copying}\label{copying}
 
-Copyright © (2017, 2018) Patrick B Warren.
+Copyright \copyright\ (2017, 2018) Patrick B Warren.
+
 These notes are licensed under a
 \href{https://creativecommons.org/licenses/by-nc-sa/4.0/}{Creative
   Commons Attribution-NonCommercial-ShareAlike 4.0 International
