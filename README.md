@@ -48,10 +48,8 @@ in which case it is imported even if the 'surface' option is left
 unchecked.
 
 On clicking OK, vector layers are created to contain the imported
-features as desired.
-
-Note that legs, walls, cross sections, and traverses are imported as
-separate vector layers for convenience.
+features as desired.  Legs, walls, cross sections, and traverses are 
+imported as separate vector layers for convenience.
 
 If 'keep features' is selected, then previously imported features are
 not discarded, and the newly-created layers will contain both the
