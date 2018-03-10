@@ -14,6 +14,10 @@
 File parser based on a library to handle Survex 3D files (*.3d) 
 Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
 
+Batch save loosely based on Batch Save Layers plugin 
+copyright (C) 2016 Robert Spiers
+http://rjspiers.github.io/qgis-batch-save-layers/
+
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
