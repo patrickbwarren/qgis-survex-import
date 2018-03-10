@@ -243,7 +243,7 @@ copyright &copy; 2008-2012 Thomas Holder, http://sf.net/users/speleo3/;
 see https://github.com/speleo3/inkscape-speleo.
 
 Batch save based on GPLv2 code in Batch Save Layers QGIS plugin 
-copyright (C) 2016 by Robert Spiers. See
+copyright &copy; 2016 by Robert Spiers. See
 http://rjspiers.github.io/qgis-batch-save-layers/
 
 Modifications and extensions copyright &copy; (2017, 2018) Patrick B Warren.
