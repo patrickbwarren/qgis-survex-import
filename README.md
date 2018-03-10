@@ -9,7 +9,8 @@ typically by survex &ge; 1.2.14._
 * import stations and legs with full metadata ;
 * features carry _z_ dimension (elevation) data ;
 * create passage walls, cross-sections, and polygons from LRUD data ;
-* CRS can be set from PROJ.4 string embedded in .3d file.
+* CRS can be set from PROJ.4 string embedded in .3d file ;
+* batch save results to ESRI shapefiles.
 
 ### Installation
 
@@ -38,8 +39,9 @@ window for the user to select a .3d file with a number of options:
     - as walls, _ditto_ ;
     - as cross sections, _ditto_ ;
     - as traverses, showing the centrelines used for above ;
+* Get CRS from .3d file if possible ;
 * Keep features from previous import(s) ;
-* Get CRS from .3d file if possible.
+* (optional) Select a directory to batch save results as ESRI shapefiles.
   
 (\*) In rare cases a station may be flagged both surface and underground,
 in which case it is imported even if the 'surface' option is left
@@ -56,8 +58,17 @@ not discarded, and the newly-created layers will contain both the
 previously imported features plus any new features imported from the
 designated .3d file.  This choice allows processed survey data sets to
 be combined from multiple data sources (multiple .3d files).  Note
-that cumulative imports do not result in features being overwritten, even if they
-happen to share the same name: all features are assigned a unique ID.
+that cumulative imports do not result in features being overwritten,
+even if they happen to share the same name, since all features are
+assigned a unique ID.
+
+If a directory is selected to batch save results then the
+newly-created layers are saved into ESRI shapefiles in that directory.
+The directory is created if it doesn't already exist.  The file names
+are currently derived from the layer names, which are derived from the
+survey title(s) extracted from the .3d file (to set this specifically,
+use *title in the survex file).  The shapefiles include _z_ dimension
+data.
 
 All layers are created with an ELEVATION attribute, for convenience.
 For stations this is the just the _z_ dimension.  For all
@@ -94,20 +105,20 @@ There is one point to bear in mind regarding the _z_ dimension data.
 Because of the (current) limitations in QGIS for creating vector
 layers in memory, the layer type does not explicitly know that the
 features include _z_ dimensions.  To ensure the _z_ dimension data is
-correctly incorporated when saving to a shapefile, in the 'Save as
-...'  dialog make sure that the geometry type is specified (eg for
-legs this should be 'LineString', and for stations it should be
-'Point') and the 'Include _z_ dimension' box is checked.
+correctly incorporated when saving layers by hand, in the 'Save as
+...'  dialog make sure that the geometry type is specified (ie 'Point'
+for stations, 'Polygon' for polygons, and 'LineString' for everything
+else) and the 'Include _z_ dimension' box is checked.
 
 #### Passage walls
 
 Passage walls (as line strings), polygons, and cross sections (as
 lines) are computed from the left and right measurements in the LRUD
 data in the same way that the `aven` viewer in survex displays passage
-'tubes' (well, near enough...).  The direction of travel (bearing) is worked out, and used to
-compute the positions of points on the left and right hand passage walls.
-These wall points are then assembled into the desired features (walls,
-polygons, cross sections).
+'tubes' (well, near enough...).  The direction of travel (bearing) is
+worked out, and used to compute the positions of points on the left
+and right hand passage walls.  These wall points are then assembled
+into the desired features (walls, polygons, cross sections).
 
 The direction of travel is inferred from the directions
 of the two legs on either side of the given station (with special

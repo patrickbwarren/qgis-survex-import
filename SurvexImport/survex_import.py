@@ -63,6 +63,7 @@ class SurvexImport:
     station_xyz = {}
     xsect_list = []
     title = ''
+    path = ''
 
     def __init__(self, iface):
         """Constructor.
@@ -220,18 +221,12 @@ class SurvexImport:
         del self.toolbar
 
     def select_3d_file(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ", "",  '*.3d')
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ", self.path,  '*.3d')
         self.dlg.selectedFile.setText(filename)
-
-        # to be done - remember last-used path
-        # QString fileName = QFileDialog::getOpenFileName(this, caption, path);
-        # if (!fileName.isNull()) {
-        #    ...
-        #    path = QFileInfo(fileName).path(); // store path for next time
-        # }
+        self.path = QFileInfo(filename).path() # memorise path selection
 
     def select_dir(self):
-        savedir = QFileDialog.getExistingDirectory(self.dlg, "Select directory for ESRI shapefiles", "")
+        savedir = QFileDialog.getExistingDirectory(self.dlg, "Select directory for ESRI shapefiles", self.path)
         self.dlg.selectedDir.setText(savedir)
 
     # << perfection is achieved not when nothing more can be added 
@@ -491,9 +486,34 @@ class SurvexImport:
             # like pushing onto a stack, so in reverse order.  Layers
             # are created only if required and data is available.
             # If nlehv is not None, then error data has been provided.
-
             
             layers = [] # used to keep a list of the created layers
+
+            if include_stations and self.station_list:
+                
+                station_layer = self.add_layer('stations', 'Point', epsg)
+    
+                attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
+                attrs.insert(0, QgsField('ELEVATION', QVariant.Double))
+                attrs.insert(0, QgsField('NAME', QVariant.String))
+                station_layer.dataProvider().addAttributes(attrs)
+                station_layer.updateFields() 
+    
+                features = []
+
+                for (xyz, label, flag) in self.station_list:
+                    x, y, z = [0.01*v for v in xyz]
+                    attrs = [1 if flag & k else 0 for k in self.station_flags]
+                    attrs.insert(0, round(z, 2))
+                    attrs.insert(0, label)
+                    feat = QgsFeature()
+                    geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
+                    feat.setGeometry(geom)
+                    feat.setAttributes(attrs)
+                    features.append(feat)
+                    
+                station_layer.dataProvider().addFeatures(features)
+                layers.append(station_layer)
 
             if include_legs and self.leg_list:
                 
@@ -539,32 +559,6 @@ class SurvexImport:
                     
                 leg_layer.dataProvider().addFeatures(features)
                 layers.append(leg_layer)
-
-            if include_stations and self.station_list:
-                
-                station_layer = self.add_layer('stations', 'Point', epsg)
-    
-                attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
-                attrs.insert(0, QgsField('ELEVATION', QVariant.Double))
-                attrs.insert(0, QgsField('NAME', QVariant.String))
-                station_layer.dataProvider().addAttributes(attrs)
-                station_layer.updateFields() 
-    
-                features = []
-
-                for (xyz, label, flag) in self.station_list:
-                    x, y, z = [0.01*v for v in xyz]
-                    attrs = [1 if flag & k else 0 for k in self.station_flags]
-                    attrs.insert(0, round(z, 2))
-                    attrs.insert(0, label)
-                    feat = QgsFeature()
-                    geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
-                    feat.setGeometry(geom)
-                    feat.setAttributes(attrs)
-                    features.append(feat)
-                    
-                station_layer.dataProvider().addFeatures(features)
-                layers.append(station_layer)
 
             # The calculations below use integers for xyz and
             # conversion to metres is left to the end.  Then dh2 is an
@@ -744,24 +738,18 @@ class SurvexImport:
                     os.makedirs(output_dir)
                 for layer in layers:
                     shape_file = layer.name()
-                    shape_file = sub(' - ', '_', shape_file) # replace ' - ' in layer name with underscore
-                    shape_file = sub(' + ', '_', shape_file) # ditto for ' + ' for multiple imports
-                    shape_file = sub(r"[^\w\s]", '', shape_file) # remove remaining non-word characters except numbers and letters
-                    layer_type = layer.wkbType()
-                    if layer_type in self.type_convert:
-                        override_type = self.type_convert[layer_type]
-                    else:
-                        override_type = QgsWKBTypes.Unknown
-                    msg = "DEBUGGING: shapefile=%s wkbType=%i QgsWKBType=%i" % (shape_file, layer_type, override_type)
-                    QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
-                    writer = QgsVectorFileWriter.writeAsVectorFormat(layer, output_dir + shape_file, "utf-8", layer.crs(), "ESRI Shapefile",
+                    shape_file = sub(r'[^\w\s]', '', shape_file) # remove non-word characters except numbers and letters
+                    shape_file = sub(r'\s+', '_', shape_file) # replace white space with underscores
+                    layer_type = layer.wkbType() # override type to keep z-dimension data
+                    override_type = self.type_convert[layer_type] if layer_type in self.type_convert else QgsWKBTypes.Unknown
+                    writer = QgsVectorFileWriter.writeAsVectorFormat(layer, output_dir + shape_file, 'utf-8',
+                                                                     layer.crs(), 'ESRI Shapefile',
                                                                      overrideGeometryType=override_type, includeZ=True)
+                    msg = layer.name() + ' to ' + shape_file + ' in ' + output_dir
                     if writer == QgsVectorFileWriter.NoError:
-                        self.iface.messageBar().pushMessage("Layer Saved", layer.name()+' saved to '+shape_file+' in '+output_dir,
-                                                            level=QgsMessageBar.INFO, duration=3)
+                        self.iface.messageBar().pushMessage('Layer Saved', msg, level=QgsMessageBar.INFO, duration=3)
                     else:
-                        self.iface.messageBar().pushMessage("Error saving layer:", layer.name()+' to '+shape_file+' in '+output_dir,
-                                                            level=QgsMessageBar.CRITICAL, duration=3)
+                        self.iface.messageBar().pushMessage('Error saving layer', msg, level=QgsMessageBar.CRITICAL, duration=3)
 
         # End of if results in run function
 

@@ -295,7 +295,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Select a directory to save created layers (optional)</string>
+    <string>Select a directory to batch save results (optional)</string>
    </property>
   </widget>
   <widget class="QToolButton" name="dirSelector">
