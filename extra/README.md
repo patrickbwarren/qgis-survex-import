@@ -17,6 +17,6 @@
   the Processing Toolbox.
 
 * `test3d.py` was used for debugging the treatment of the passage wall
-  data.  It runs like `dump3d.py`, but additionally generates a number
+  data.  It runs like `dump3d.py`, but additionally generates a number of
   `*.dat` files containing xy data which can be read into a standard
   plotting package.
