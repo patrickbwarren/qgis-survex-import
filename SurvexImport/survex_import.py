@@ -23,25 +23,30 @@ Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo
 from PyQt4.QtGui import QAction, QIcon, QFileDialog
+from qgis.gui import QgsMessageBar
+from qgis.core import *
+from PyQt4.QtCore import QVariant, QDate
+from qgis.core import QgsVectorFileWriter
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
 from survex_import_dialog import SurvexImportDialog
+
 import os.path
 
-from qgis.core import *
-from PyQt4.QtCore import QVariant, QDate
-
 from osgeo.osr import SpatialReference
-
 from struct import unpack
-from re import search
+from re import sub, search
 from math import sqrt # needed for LRUD wall calculations
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
+
+    type_convert = {QGis.WKBPoint: QgsWKBTypes.PointZ,
+                    QGis.WKBLineString: QgsWKBTypes.LineStringZ,
+                    QGis.WKBMultiPolygon: QgsWKBTypes.MultiPolygonZ}
 
     style_type = {0x00:'NORMAL', 0x01:'DIVING', 0x02:'CARTESIAN',
                   0x03:'CYLPOLAR', 0x04:'NOSURVEY', 0xff:'NOSTYLE'}
@@ -97,6 +102,9 @@ class SurvexImport:
         
         self.dlg.selectedFile.clear()
         self.dlg.fileSelector.clicked.connect(self.select_3d_file)
+        
+        self.dlg.selectedDir.clear()
+        self.dlg.dirSelector.clicked.connect(self.select_dir)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -212,8 +220,19 @@ class SurvexImport:
         del self.toolbar
 
     def select_3d_file(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ","", '*.3d')
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ", "",  '*.3d')
         self.dlg.selectedFile.setText(filename)
+
+        # to be done - remember last-used path
+        # QString fileName = QFileDialog::getOpenFileName(this, caption, path);
+        # if (!fileName.isNull()) {
+        #    ...
+        #    path = QFileInfo(fileName).path(); // store path for next time
+        # }
+
+    def select_dir(self):
+        savedir = QFileDialog.getExistingDirectory(self.dlg, "Select directory for ESRI shapefiles", "")
+        self.dlg.selectedDir.setText(savedir)
 
     # << perfection is achieved not when nothing more can be added 
     #      but when nothing more can be taken away >>
@@ -236,8 +255,8 @@ class SurvexImport:
             raise Exception("Invalid proj4 string: " + proj4string)
         code = srs.GetAttrValue('AUTHORITY', 1)
         epsg = int(code)
-        QgsMessageLog.logMessage("proj4string %s --> EPSG:%i" % (proj4string, epsg),
-                                 tag='Import .3d', level=QgsMessageLog.INFO)
+        msg = "PROJ.4 %s --> EPSG:%i" % (proj4string, epsg)
+        QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
         return epsg
 
     # Note that 'PointZ', 'LineStringZ', 'PolygonZ' are not possible
@@ -250,8 +269,8 @@ class SurvexImport:
         layer =  QgsVectorLayer(uri, name, 'memory')
         if not layer.isValid():
             raise Exception("Invalid layer with %s" % uri)
-        QgsMessageLog.logMessage("Memory layer '%s' called '%s' added" % (uri, name),
-                                 tag='Import .3d', level=QgsMessageLog.INFO)
+        msg = "Memory layer '%s' called '%s' added" % (uri, name)
+        QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
         return layer
 
     def read_xyz(self, fp):
@@ -309,14 +328,14 @@ class SurvexImport:
             
             get_crs = self.dlg.checkGetCRS.isChecked()
 
+            if not os.path.exists(survex3dfile):
+                raise Exception("File '%s' doesn't exist" % survex3dfile)
+
             if discard_features:
                 self.leg_list = []
                 self.station_list = []
                 self.station_xyz = {}
                 self.xsect_list = []
-
-            if not os.path.exists(survex3dfile):
-                raise Exception("File '%s' doesn't exist" % survex3dfile)
 
             # Read .3d file as binary, parse and save data structures
             
@@ -340,7 +359,10 @@ class SurvexImport:
                 fields = line.split(b'\x00')
                 
                 previous_title = '' if discard_features else self.title
-                self.title = previous_title + ' + ' + fields[0];
+                if previous_title:
+                    self.title = previous_title + ' + ' + fields[0];
+                else:
+                    self.title = fields[0];
 
                 # Try to work out EPSG number from CS if available and asked-for
                 
@@ -470,6 +492,9 @@ class SurvexImport:
             # are created only if required and data is available.
             # If nlehv is not None, then error data has been provided.
 
+            
+            layers = [] # used to keep a list of the created layers
+
             if include_legs and self.leg_list:
                 
                 leg_layer = self.add_layer('legs', 'LineString', epsg)
@@ -513,8 +538,7 @@ class SurvexImport:
                         features.append(feat)
                     
                 leg_layer.dataProvider().addFeatures(features)
-                leg_layer.updateExtents() 
-                QgsMapLayerRegistry.instance().addMapLayers([leg_layer])
+                layers.append(leg_layer)
 
             if include_stations and self.station_list:
                 
@@ -540,8 +564,7 @@ class SurvexImport:
                     features.append(feat)
                     
                 station_layer.dataProvider().addFeatures(features)
-                station_layer.updateExtents() 
-                QgsMapLayerRegistry.instance().addMapLayers([station_layer])
+                layers.append(station_layer)
 
             # The calculations below use integers for xyz and
             # conversion to metres is left to the end.  Then dh2 is an
@@ -675,8 +698,6 @@ class SurvexImport:
 
                 # End of processing xsect_list - now add features to requested layers
 
-                layers = []
-
                 attrs = [QgsField('ELEVATION', QVariant.Double)] # common to all
 
                 if include_polygons and quad_features:
@@ -707,10 +728,43 @@ class SurvexImport:
                     travs_layer.dataProvider().addFeatures(trav_features)
                     layers.append(travs_layer)
 
-                if layers:
-                    [ layer.updateExtents() for layer in layers ]
-                    QgsMapLayerRegistry.instance().addMapLayers(layers)
+            # End of adding polygons and/or walls - now add all created layers
 
-    # End of very long run(self) function definition
+            if layers:
+                [ layer.updateExtents() for layer in layers ]
+                QgsMapLayerRegistry.instance().addMapLayers(layers)
+
+            # Save layers to shapefiles if directory has been selected
+            # create directory if necessary
+
+            if self.dlg.selectedDir.text():
+                output_dir = self.dlg.selectedDir.text() + '/'
+                # create directory if it doesn't exist
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                for layer in layers:
+                    shape_file = layer.name()
+                    shape_file = sub(' - ', '_', shape_file) # replace ' - ' in layer name with underscore
+                    shape_file = sub(' + ', '_', shape_file) # ditto for ' + ' for multiple imports
+                    shape_file = sub(r"[^\w\s]", '', shape_file) # remove remaining non-word characters except numbers and letters
+                    layer_type = layer.wkbType()
+                    if layer_type in self.type_convert:
+                        override_type = self.type_convert[layer_type]
+                    else:
+                        override_type = QgsWKBTypes.Unknown
+                    msg = "DEBUGGING: shapefile=%s wkbType=%i QgsWKBType=%i" % (shape_file, layer_type, override_type)
+                    QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
+                    writer = QgsVectorFileWriter.writeAsVectorFormat(layer, output_dir + shape_file, "utf-8", layer.crs(), "ESRI Shapefile",
+                                                                     overrideGeometryType=override_type, includeZ=True)
+                    if writer == QgsVectorFileWriter.NoError:
+                        self.iface.messageBar().pushMessage("Layer Saved", layer.name()+' saved to '+shape_file+' in '+output_dir,
+                                                            level=QgsMessageBar.INFO, duration=3)
+                    else:
+                        self.iface.messageBar().pushMessage("Error saving layer:", layer.name()+' to '+shape_file+' in '+output_dir,
+                                                            level=QgsMessageBar.CRITICAL, duration=3)
+
+        # End of if results in run function
+
+    # End of run function definition
 
 # That's it
