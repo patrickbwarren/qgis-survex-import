@@ -60,7 +60,7 @@ be combined from multiple sources.  Note that cumulative imports do
 not result in features being overwritten, even if they happen to share
 the same name, since all features are assigned a unique ID.
 
-If a directory is selected to batch save results then the
+If a directory is selected then the
 newly-created layers are saved into ESRI shapefiles in that directory.
 The directory is created if it doesn't already exist.  The file names
 are derived from the layer names (see next), with all
