@@ -308,6 +308,7 @@ class SurvexImport:
             # This is where all the work is done.
 
             survex3dfile = self.dlg.selectedFile.text()
+            chosen_title = self.dlg.chosenTitle.text()
 
             include_legs = self.dlg.checkLegs.isChecked()
             include_stations = self.dlg.checkStations.isChecked()
@@ -356,12 +357,15 @@ class SurvexImport:
 
                 line = fp.readline().rstrip() # Metadata (title and coordinate system)
                 fields = line.split(b'\x00')
-                
-                previous_title = '' if discard_features else self.title
-                if previous_title:
-                    self.title = previous_title + ' + ' + fields[0];
+
+                if chosen_title:
+                    self.title = chosen_title
                 else:
-                    self.title = fields[0];
+                    previous_title = '' if discard_features else self.title
+                    if previous_title:
+                        self.title = previous_title + ' + ' + fields[0];
+                    else:
+                        self.title = fields[0];
 
                 # Try to work out EPSG number from CS if available and asked-for
                 

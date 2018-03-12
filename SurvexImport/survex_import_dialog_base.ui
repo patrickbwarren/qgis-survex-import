@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>415</width>
-    <height>471</height>
+    <height>503</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>430</y>
+     <y>460</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -29,7 +29,7 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="label_1">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -263,7 +263,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>310</y>
+     <y>300</y>
      <width>271</width>
      <height>21</height>
     </rect>
@@ -276,7 +276,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>380</y>
+     <y>360</y>
      <width>321</width>
      <height>23</height>
     </rect>
@@ -289,7 +289,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>360</y>
+     <y>340</y>
      <width>361</width>
      <height>16</height>
     </rect>
@@ -298,17 +298,40 @@
     <string>Select a directory to batch save results (optional)</string>
    </property>
   </widget>
-  <widget class="QToolButton" name="dirSelector">
+  <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>350</x>
-     <y>380</y>
-     <width>29</width>
-     <height>22</height>
+     <x>20</x>
+     <y>400</y>
+     <width>361</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Set title (leave blank for default)</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="chosenTitle">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>420</y>
+     <width>321</width>
+     <height>23</height>
     </rect>
    </property>
    <property name="toolTip">
     <string>Set destination folder</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="dirSelector">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>360</y>
+     <width>31</width>
+     <height>23</height>
+    </rect>
    </property>
    <property name="text">
     <string>...</string>
