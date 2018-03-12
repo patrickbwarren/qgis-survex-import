@@ -41,7 +41,8 @@ window for the user to select a .3d file with a number of options:
     - as traverses, showing the centrelines used for above ;
 * Get CRS from .3d file if possible ;
 * Keep features from previous import(s) ;
-* (optional) Select a directory to batch save results as ESRI shapefiles.
+* (optional) Select a directory to batch save results as ESRI shapefiles ;
+* (optional) Set a title.
   
 (\*) In rare cases a station may be flagged both surface and underground,
 in which case it is imported even if the 'surface' option is left
@@ -49,24 +50,30 @@ unchecked.
 
 On clicking OK, vector layers are created to contain the imported
 features as desired.  Legs, walls, cross sections, and traverses are 
-imported as separate vector layers for convenience.
+imported as line strings in separate vector layers for convenience.
 
 If 'keep features' is selected, then previously imported features are
 not discarded, and the newly-created layers will contain both the
 previously imported features plus any new features imported from the
 designated .3d file.  This choice allows processed survey data sets to
-be combined from multiple data sources (multiple .3d files).  Note
-that cumulative imports do not result in features being overwritten,
-even if they happen to share the same name, since all features are
-assigned a unique ID.
+be combined from multiple sources.  Note that cumulative imports do
+not result in features being overwritten, even if they happen to share
+the same name, since all features are assigned a unique ID.
 
 If a directory is selected to batch save results then the
 newly-created layers are saved into ESRI shapefiles in that directory.
 The directory is created if it doesn't already exist.  The file names
-are currently derived from the layer names, which are derived from the
-survey title(s) extracted from the .3d file (to set this specifically,
-use *title in the survex file).  The shapefiles include _z_ dimension
-data.
+are derived from the layer names (see next), with all
+non-word characters except numbers and letters removed and all
+whitespace converted to underscores. The shapefiles are inclusive of
+all attributes and _z_ dimension data.
+
+If a title is entered, then layers are created with this title, and
+a subtitle to reflect the content (stations, legs, etc).  Otherwise
+the title is obtained from the survey title(s) extracted from the .3d
+file(s).  To set this specifically, use *title in the survex file.
+
+#### Imported attributes
 
 All layers are created with an ELEVATION attribute, for convenience.
 For stations this is the just the _z_ dimension.  For all
