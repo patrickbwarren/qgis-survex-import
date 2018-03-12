@@ -569,11 +569,12 @@ class SurvexImport:
                 leg_layer.dataProvider().addFeatures(features)
                 layers.append(leg_layer)
 
-            # The calculations below use integers for xyz and
+            # The calculations below use integers for xyz and lrud, and
             # conversion to metres is left to the end.  Then dh2 is an
             # integer and the test for a plumb is safely dh2 = 0.
             
-            if (include_polygons or include_walls) and self.xsect_list:
+            if (include_traverses or include_xsections
+                or include_walls or include_polygons) and self.xsect_list:
                                 
                 trav_features = []
                 wall_features = []
@@ -666,10 +667,9 @@ class SurvexImport:
                     # Slightly more elaborate, pair up points on left
                     # and right walls, and build a cross section as a
                     # 2-point line string, and a quadrilateral polygon
-                    # (a closed 5-point line string for the exterior
-                    # ring of the polygon).  Note that polygons in
-                    # QGIS are supposed to have their points ordered
-                    # clockwise.
+                    # with a closed 5-point line string for the
+                    # exterior ring.  Note that polygons in QGIS are
+                    # supposed to have their points ordered clockwise.
 
                     for i, xyz_pair in enumerate(zip(left_wall, right_wall)):
 
@@ -716,13 +716,6 @@ class SurvexImport:
                     travs_layer.updateFields()
                     travs_layer.dataProvider().addFeatures(trav_features)
                     layers.append(travs_layer)
-                    
-                if include_walls and wall_features:
-                    walls_layer = self.add_layer('walls', 'LineString', epsg)
-                    walls_layer.dataProvider().addAttributes(attrs)
-                    walls_layer.updateFields()
-                    walls_layer.dataProvider().addFeatures(wall_features)
-                    layers.append(walls_layer)
 
                 if include_xsections and xsect_features:
                     xsects_layer = self.add_layer('xsections', 'LineString', epsg)
@@ -731,7 +724,14 @@ class SurvexImport:
                     xsects_layer.dataProvider().addFeatures(xsect_features)
                     layers.append(xsects_layer)
 
-                if include_up_down: # move before previous block to add to xsections
+                if include_walls and wall_features:
+                    walls_layer = self.add_layer('walls', 'LineString', epsg)
+                    walls_layer.dataProvider().addAttributes(attrs)
+                    walls_layer.updateFields()
+                    walls_layer.dataProvider().addFeatures(wall_features)
+                    layers.append(walls_layer)
+
+                if include_up_down: # if requested for polygons
                     attrs += [QgsField(s, QVariant.Double) for s in ('MEAN_UP', 'MEAN_DOWN') ]
 
                 if include_polygons and quad_features:
