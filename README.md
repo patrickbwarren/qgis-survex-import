@@ -223,15 +223,19 @@ Stations can be coloured by this, or the information can be added to
 the 'map tip', etc.
 
 Three dimensional views can be made with the Qgis2threejs plugin,
-usually in combination with a DEM.  Use the ELEVATION attribute to set
-the absolute height of the features.  Passage 'tubes' in aven can be
-approximately rendered using polygons, with the base set to floor
-level and the extruded height set to roof level.  To do this import
-the MEAN_UP and MEAN_DOWN fields mentioned above and use the field
-calculator to make two new floating point (double) fields: FLOOR equal
-to ELEVATION minus MEAN_DOWN, and HEIGHT equal to MEAN_DOWN plus
-MEAN_UP.  Then render the polygons with the _z_ co-ordinate as the
-absolute FLOOR, and extruded height as HEIGHT.
+usually in combination with a DEM.  To render features in 3d _either_
+use the ELEVATION attribute to set the absolute height, _or_ (better)
+save the imported data to shapefile(s) and re-import so that
+Qgis2threejs knows about the _z_ dimension data and can use it to
+inform the rendering.
+
+Passage 'tubes' in aven can be approximately rendered using polygons,
+with the base set to floor level and the extruded height set to roof
+level.  To do this import the MEAN_UP and MEAN_DOWN fields mentioned
+above and use the field calculator to make two new floating point
+(double) fields: FLOOR equal to ELEVATION minus MEAN_DOWN, and HEIGHT
+equal to MEAN_DOWN plus MEAN_UP.  Then render the polygons with the
+_z_ co-ordinate as the absolute FLOOR, and extruded height as HEIGHT.
 
 Sample georeferenced survey data can be found in
 [`DowProv.3d`](DowProv/DowProv.3d).
