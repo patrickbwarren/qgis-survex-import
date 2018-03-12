@@ -34,7 +34,7 @@ window for the user to select a .3d file with a number of options:
 
 * Import legs, with options to include splay, duplicate, and surface legs ;
 * Import stations, with the option to include surface stations (\*) ;
-* Import passage data, with the option to use clino weights (see below):
+* Import passage data, with the option to use clino weights and include up / down (see below):
     - as polygons, computed from L+R in LRUD data ;
     - as walls, _ditto_ ;
     - as cross sections, _ditto_ ;
@@ -60,13 +60,12 @@ be combined from multiple sources.  Note that cumulative imports do
 not result in features being overwritten, even if they happen to share
 the same name, since all features are assigned a unique ID.
 
-If a directory is selected then the
-newly-created layers are saved into ESRI shapefiles in that directory.
-The directory is created if it doesn't already exist.  The file names
-are derived from the layer names (see next), with all
-non-word characters except numbers and letters removed and all
-whitespace converted to underscores. The shapefiles are inclusive of
-all attributes and _z_ dimension data.
+If a directory is selected then the newly-created layers are saved
+into ESRI shapefiles in that directory.  The directory is created if
+it doesn't already exist.  The file names are derived from the layer
+names (see next), with all non-word characters except numbers and
+letters removed and all whitespace converted to underscores. The
+shapefiles are inclusive of all attributes and _z_ dimension data.
 
 If a title is entered, then layers are created with this title, and
 a subtitle to reflect the content (stations, legs, etc).  Otherwise
@@ -99,6 +98,11 @@ CYLPOLAR, or NOSURVEY.
 The DATE fields are either the same, or represent a date
 range, in the standard QGIS format YYYY-MM-DD.
 
+If up / down data for passage walls is included, then the polygons have
+MEAN_UP and MEAN_DOWN attributes in addition to ELEVATION.  These are
+computed from the LRUD data for the two stations at either end of the
+leg.  They can be used in 3d work (see end).
+
 For the most part importing the CRS from the .3d file should work as
 expected if the survey data has been georeferenced using the survex
 `*cs` and `*cs out` commands.  If it doesn't, one can always uncheck
@@ -125,13 +129,12 @@ worked out, and used to compute the positions of points on the left
 and right hand passage walls.  These wall points are then assembled
 into the desired features (walls, polygons, cross sections).
 
-The direction of travel is inferred from the directions
-of the two legs on either side of the given station (with special
-treatment for stations at the start and end of a traverse).  In
-averaging these, either the legs can be weighted equally (except true
-plumbs which break the sequence), or the option is given to weight legs by 
-the cosine of the inclination 
-(computed from the processed data, not the
+The direction of travel is inferred from the directions of the two
+legs on either side of the given station (with special treatment for
+stations at the start and end of a traverse).  In averaging these,
+either the legs can be weighted equally (except true plumbs which
+break the sequence), or the option is given to weight legs by the
+cosine of the inclination (computed from the processed data, not the
 actual clino reading).  The former is the default, and the latter
 corresponds to checking the 'use clino weights' box in the import
 dialog.  This alternative option downplays the significance of the
@@ -178,11 +181,11 @@ walls, cross sections and traverses; `points` for stations; and
 
 Two versions of these style files are provided.
 
-The first version uses a graduated, inverted spectral colour ramp to colour ranges of
-ELEVATION.  A small limitation is that these ranges are not
-automatically updated to match the vertical range of the current data
-set, but these can be refreshed by clicking on 'Classify' (then
-'Apply' to see the changes).
+The first version uses a graduated, inverted spectral colour ramp to
+colour ranges of ELEVATION.  A small limitation is that these ranges
+are not automatically updated to match the vertical range of the
+current data set, but these can be refreshed by clicking on 'Classify'
+(then 'Apply' to see the changes).
 
 The second version uses a simple marker (line, or fill) with the
 colour set by an expression that maps the ELEVATION to a spectral
@@ -218,6 +221,17 @@ built-in field calculator to make a DEPTH field containing the depth
 below surface, as SURFACE_ELEV minus ELEVATION.
 Stations can be coloured by this, or the information can be added to
 the 'map tip', etc.
+
+Three dimensional views can be made with the Qgis2threejs plugin,
+usually in combination with a DEM.  Use the ELEVATION attribute to set
+the absolute height of the features.  Passage 'tubes' in aven can be
+approximately rendered using polygons, with the base set to floor
+level and the extruded height set to roof level.  To do this import
+the MEAN_UP and MEAN_DOWN fields mentioned above and use the field
+calculator to make two new floating point (double) fields: FLOOR equal
+to ELEVATION minus MEAN_DOWN, and HEIGHT equal to MEAN_DOWN plus
+MEAN_UP.  Then render the polygons with the _z_ co-ordinate as the
+absolute FLOOR, and extruded height as HEIGHT.
 
 Sample georeferenced survey data can be found in
 [`DowProv.3d`](DowProv/DowProv.3d).

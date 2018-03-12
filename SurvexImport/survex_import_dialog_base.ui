@@ -337,6 +337,19 @@
     <string>...</string>
    </property>
   </widget>
+  <widget class="QCheckBox" name="checkIncludeUD">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>230</y>
+     <width>141</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Include up / down</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>

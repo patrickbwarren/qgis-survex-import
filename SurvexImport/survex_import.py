@@ -323,6 +323,7 @@ class SurvexImport:
             exclude_surface_stations = not self.dlg.checkStationsSurface.isChecked()
 
             use_clino_wgt = self.dlg.checkClinoWeights.isChecked()
+            include_up_down = self.dlg.checkIncludeUD.isChecked()
 
             discard_features = not self.dlg.checkKeepFeatures.isChecked()
             
@@ -588,8 +589,8 @@ class SurvexImport:
 
                     for label, lrud in xsect:
                         xyz = self.station_xyz[label] # look up coordinates from label
-                        lr = tuple([max(0, v) for v in lrud[0:2]]) # clear missing LR data
-                        centerline.append(xyz + lr) # and collect as 5-uple
+                        lrud_or_zero = tuple([max(0, v) for v in lrud]) # deal with missing data
+                        centerline.append(xyz + lrud_or_zero) # and collect as 7-uple
 
                     direction = [] # will contain the corresponding direction vectors
 
@@ -599,7 +600,8 @@ class SurvexImport:
                     # dz^2.  The normalisation is correspondingly
                     # either 1/dh, or 1/dh * dh/dl = 1/dl.
 
-                    for i, (x, y, z, l, r) in enumerate(centerline):
+                    for i, xyzlrud in enumerate(centerline):
+                        x, y, z = xyzlrud[0:3]
                         if i > 0:
                             dx, dy, dz = x - xp, y - yp, z - zp
                             dh2 = dx*dx + dy*dy # integer horizontal displacement (mm^2)
@@ -610,12 +612,13 @@ class SurvexImport:
 
                     left_wall = []
                     right_wall = []
+                    up_down = []
 
                     # We build the walls by walking through the list
                     # of stations and directions, with simple defaults
                     # for the start and end stations
                     
-                    for i, (x, y, z, l, r) in enumerate(centerline):
+                    for i, (x, y, z, l, r, u, d) in enumerate(centerline):
                         d1x, d1y = direction[i-1] if i > 0 else (0, 0)
                         d2x, d2y = direction[i] if i+1 < len(centerline) else (0, 0)
                         dx, dy = d1x+d2x, d1y+d2y # mean (sum of) direction vectors
@@ -624,18 +627,19 @@ class SurvexImport:
                         # Convert to metres when saving the points
                         left_wall.append((0.01*(x-l*ey), 0.01*(y+l*ex), 0.01*z))
                         right_wall.append((0.01*(x+r*ey), 0.01*(y-r*ex), 0.01*z))
+                        up_down.append((0.01*u, 0.01*d))
 
                     # Mean elevation of centerline, used for elevation attribute
                     
-                    elev = 0.01 * sum([xyzlr[2] for xyzlr in centerline]) / len(centerline)
+                    elev = 0.01 * sum([xyzlrud[2] for xyzlrud in centerline]) / len(centerline)
                     attrs = [round(elev, 2)]
 
                     # Now create the feature sets - first the centerline traverse
 
                     points = []
 
-                    for xyzlr in centerline:
-                        xyz = [0.01*v for v in xyzlr[0:3]] # These were mm, convert to metres
+                    for xyzlrud in centerline:
+                        xyz = [0.01*v for v in xyzlrud[0:3]] # These were mm, convert to metres
                         points.append(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
                         
                     linestring = QgsLineStringV2()
@@ -671,6 +675,8 @@ class SurvexImport:
 
                         elev = 0.01 * centerline[i][2] # elevation of station in centerline
                         attrs = [round(elev, 2)]
+#                        if include_up_down:
+#                            attrs += list(up_down[i])
                         points = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in xyz_pair]
                         linestring = QgsLineStringV2()
                         linestring.setPoints(points)
@@ -683,6 +689,8 @@ class SurvexImport:
                         if i > 0:
                             elev = 0.5*(prev_xyz_pair[0][2] + xyz_pair[0][2]) # average elevation
                             attrs = [round(elev, 2)]
+                            if include_up_down: # average up / down
+                                attrs += [ 0.5*(v1+v2) for (v1, v2) in zip(up_down[i-1], up_down[i]) ]
                             points = []
                             for xyz in tuple(reversed(prev_xyz_pair)) + xyz_pair + (prev_xyz_pair[1],):
                                 points.append(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
@@ -700,14 +708,14 @@ class SurvexImport:
 
                 # End of processing xsect_list - now add features to requested layers
 
-                attrs = [QgsField('ELEVATION', QVariant.Double)] # common to all
+                attrs = [QgsField('ELEVATION', QVariant.Double)] # common to first two
 
-                if include_polygons and quad_features:
-                    quads_layer = self.add_layer('polygons', 'MultiPolygon', epsg)
-                    quads_layer.dataProvider().addAttributes(attrs)
-                    quads_layer.updateFields()
-                    quads_layer.dataProvider().addFeatures(quad_features)
-                    layers.append(quads_layer)
+                if include_traverses and trav_features:
+                    travs_layer = self.add_layer('traverses', 'LineString', epsg)
+                    travs_layer.dataProvider().addAttributes(attrs)
+                    travs_layer.updateFields()
+                    travs_layer.dataProvider().addFeatures(trav_features)
+                    layers.append(travs_layer)
                     
                 if include_walls and wall_features:
                     walls_layer = self.add_layer('walls', 'LineString', epsg)
@@ -723,12 +731,15 @@ class SurvexImport:
                     xsects_layer.dataProvider().addFeatures(xsect_features)
                     layers.append(xsects_layer)
 
-                if include_traverses and trav_features:
-                    travs_layer = self.add_layer('traverses', 'LineString', epsg)
-                    travs_layer.dataProvider().addAttributes(attrs)
-                    travs_layer.updateFields()
-                    travs_layer.dataProvider().addFeatures(trav_features)
-                    layers.append(travs_layer)
+                if include_up_down: # move before previous block to add to xsections
+                    attrs += [QgsField(s, QVariant.Double) for s in ('MEAN_UP', 'MEAN_DOWN') ]
+
+                if include_polygons and quad_features:
+                    quads_layer = self.add_layer('polygons', 'MultiPolygon', epsg)
+                    quads_layer.dataProvider().addAttributes(attrs)
+                    quads_layer.updateFields()
+                    quads_layer.dataProvider().addFeatures(quad_features)
+                    layers.append(quads_layer)
 
             # End of adding polygons and/or walls - now add all created layers
 
@@ -755,7 +766,7 @@ class SurvexImport:
                                                                      overrideGeometryType=override_type, includeZ=True)
                     msg = layer.name() + ' to ' + shape_file + ' in ' + output_dir
                     if writer == QgsVectorFileWriter.NoError:
-                        self.iface.messageBar().pushMessage('Layer Saved', msg, level=QgsMessageBar.INFO, duration=3)
+                        self.iface.messageBar().pushMessage('Layer Saved', msg, level=QgsMessageBar.INFO, duration=1)
                     else:
                         self.iface.messageBar().pushMessage('Error saving layer', msg, level=QgsMessageBar.CRITICAL, duration=3)
 
