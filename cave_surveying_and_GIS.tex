@@ -408,23 +408,20 @@ some 30 years.
 
 \subsection{GIS import methods}\label{gis-import-methods}
 
-\subsubsection{Quick-and-dirty import via DXF}\label{quick-and-dirty-two-dimensional-flat-import}
+\subsubsection{Using DXF}\label{quick-and-dirty-two-dimensional-flat-import}
 
-The quickest way to get survey data into a GIS platform (QGIS) once the
-dataset has been georeferenced as just described is via the DXF file
-format, using the survex \verb}cad3d} tool, or exporting from
-\verb}aven}. One can load this DXF file into a GIS platform like QGIS.
-At present this direct route does not neatly import \zdimension\ (elevation)
-data, but nevertheless could be useful as a quick and dirty way to throw
-for example a centreline onto a map.
+Once the dataset has been georeferenced as just described, a DXF file
+can be generated using the survex \verb}cad3d} tool, or exporting as
+such from \verb}aven}.  This DXF file can then be directly imported
+into QGIS.  At present this route does not neatly capture
+\zdimension\ (elevation) data.
 
-\subsubsection{Import after conversion using GDAL}\label{three-dimensional-import}
+\subsubsection{DXF conversion using GDAL}\label{three-dimensional-import}
 
-This import route requires command-line access to the
+This route requires command-line access to the
 \href{http://www.gdal.org/ogr_utilities.html}{GDAL utilities}.
 
-From the DXF file, the centreline can be extracted by running (at the
-command line)
+From the DXF file, the centreline can be extracted by running
 
 \begin{verbatim}
 ogr2ogr -f "ESRI Shapefile" DowProv_centreline.shp DowProv.dxf \
@@ -448,27 +445,25 @@ ogr2ogr -f "ESRI Shapefile" DowProv_stations.shp DowProv.dxf \
   -where "Layer='Labels'" -a_srs EPSG:7405
 \end{verbatim}
 
-\subsubsection{Import using QGIS plugin}\label{import-using-qgis-plugin}
+\subsubsection{QGIS survex import plugin}\label{import-using-qgis-plugin}
 
-The plugin provides a convenient route to import features (legs and
-stations) from a \verb}.3d} file, with \zdimension\ (elevation) and
-other metadata properly included.
+\emph{This is probably the preferred route now!}
 
-Features include
+Features include:
 \begin{itemize}
 \tightlist
 \item no dependencies, natively reads binary .3d files ;
 \item import stations and legs with full metadata ;
-\item  features carry \zdimension\ (elevation) data ;
-\item  create passage walls, cross-sections, and polygons from LRUD data ;
-\item  CRS can be set from a PROJ.4 string embedded in \verb}.3d} file.
+\item features carry \zdimension\ (elevation) data ;
+\item create passage walls, cross-sections, and polygons from LRUD data ;
+\item CRS can be set from a PROJ.4 string embedded in \verb}.3d} file ;
+\item batch save results with full metadata to ESRI shapefiles.
 \end{itemize}
 
 More details and installation instructions can be
 found in the 
 \href{https://github.com/patrickbwarren/qgis-survex-import}{repository}.
 Some additional import scripts can be found in the \verb}extra} subdirectory.
-
 
 \subsection{Georeferencing images, maps, and old
 surveys}\label{georeferencing-images-maps-and-old-surveys}

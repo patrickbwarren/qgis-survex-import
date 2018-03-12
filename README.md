@@ -10,7 +10,7 @@ typically by survex &ge; 1.2.14._
 * features carry _z_ dimension (elevation) data ;
 * create passage walls, cross-sections, and polygons from LRUD data ;
 * CRS can be set from PROJ.4 string embedded in .3d file ;
-* batch save results to ESRI shapefiles.
+* batch save results with full metadata to ESRI shapefiles.
 
 ### Installation
 
