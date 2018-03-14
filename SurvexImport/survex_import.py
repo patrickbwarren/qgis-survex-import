@@ -52,7 +52,7 @@ class SurvexImport:
 
     type_convert = {QGis.WKBPoint: QgsWKBTypes.PointZ,
                     QGis.WKBLineString: QgsWKBTypes.LineStringZ,
-                    QGis.WKBMultiPolygon: QgsWKBTypes.MultiPolygonZ}
+                    QGis.WKBPolygon: QgsWKBTypes.PolygonZ}
 
     style_type = {0x00:'NORMAL', 0x01:'DIVING', 0x02:'CARTESIAN',
                   0x03:'CYLPOLAR', 0x04:'NOSURVEY', 0xff:'NOSTYLE'}
@@ -737,7 +737,7 @@ class SurvexImport:
                     attrs += [QgsField(s, QVariant.Double) for s in ('MEAN_UP', 'MEAN_DOWN') ]
 
                 if include_polygons and quad_features:
-                    quads_layer = self.add_layer('polygons', 'MultiPolygon', epsg)
+                    quads_layer = self.add_layer('polygons', 'Polygon', epsg)
                     quads_layer.dataProvider().addAttributes(attrs)
                     quads_layer.updateFields()
                     quads_layer.dataProvider().addFeatures(quad_features)
@@ -751,10 +751,14 @@ class SurvexImport:
 
             # Save layers to a GeoPackage if directory has been
             # selected.  The complicated fudge here is because
-            # QgsVectorFileWriter can only write single layers, so we
-            # use a temporary GeoPackage to save each individual
-            # layer, then reload them using OGR and save the layers
-            # cumulatively into the final GeoPackage.
+            # QgsVectorFileWriter can only write single layers
+            # (afaik!), so we use a temporary GeoPackage to save each
+            # individual layer, then reload them using OGR and save
+            # the layers cumulatively into the final GeoPackage.
+            
+            # The right way to do this would be to use OGR to create
+            # each layer and add the features and attributes from the
+            # memory layers in QGIS.
 
             if self.dlg.selectedDir.text():
                 
@@ -777,8 +781,11 @@ class SurvexImport:
                 if not os.path.exists(singlelayer_gpkg):
                     raise Exception("Couldn't create temporary file")
 
+                out_path = output_dir + multilayer_gpkg
                 dr = ogr.GetDriverByName('GPKG') # to hold multiple layers
-                ds = dr.CreateDataSource(output_dir + multilayer_gpkg)
+                if os.path.exists(out_path):
+                    dr.DeleteDataSource(out_path)
+                ds = dr.CreateDataSource(out_path)
 
                 for layer in layers:
                     layer_name = layer.name().split(' - ')[1] # ie 'stations', 'legs', etc
