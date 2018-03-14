@@ -38,9 +38,11 @@ import resources
 # Import the code for the dialog
 from survex_import_dialog import SurvexImportDialog
 
-import os.path
+import os
+from tempfile import NamedTemporaryFile
 
 from osgeo.osr import SpatialReference
+from osgeo import ogr
 from struct import unpack
 from re import sub, search
 from math import sqrt # needed for LRUD wall calculations
@@ -747,30 +749,61 @@ class SurvexImport:
                 [ layer.updateExtents() for layer in layers ]
                 QgsMapLayerRegistry.instance().addMapLayers(layers)
 
-            # Save layers to shapefiles if directory has been selected
-            # create directory if necessary
+            # Save layers to a GeoPackage if directory has been
+            # selected.  The complicated fudge here is because
+            # QgsVectorFileWriter can only write single layers, so we
+            # use a temporary GeoPackage to save each individual
+            # layer, then reload them using OGR and save the layers
+            # cumulatively into the final GeoPackage.
 
             if self.dlg.selectedDir.text():
+                
                 output_dir = self.dlg.selectedDir.text() + '/'
-                # create directory if it doesn't exist
-                if not os.path.exists(output_dir):
+
+                if not os.path.exists(output_dir): # create if directory doesn't exist
                     os.makedirs(output_dir)
+                    msg = "Created " + tmp_gpkg
+                    QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
+
+                multilayer_gpkg = self.title # construct file name for GeoPackage
+                multilayer_gpkg = sub(r'[^\w\s]', '', multilayer_gpkg) # remove non-word characters except numbers and letters
+                multilayer_gpkg = sub(r'\s+', '_', multilayer_gpkg) # replace white space with underscores
+                multilayer_gpkg += '.gpkg'
+
+                f = NamedTemporaryFile(suffix='.gpkg', delete=False) # to hold single layers temporarily
+                singlelayer_gpkg = f.name
+                f.close()
+
+                if not os.path.exists(singlelayer_gpkg):
+                    raise Exception("Couldn't create temporary file")
+
+                dr = ogr.GetDriverByName('GPKG') # to hold multiple layers
+                ds = dr.CreateDataSource(output_dir + multilayer_gpkg)
+
                 for layer in layers:
-                    shape_file = layer.name()
-                    shape_file = sub(r'[^\w\s]', '', shape_file) # remove non-word characters except numbers and letters
-                    shape_file = sub(r'\s+', '_', shape_file) # replace white space with underscores
+                    layer_name = layer.name().split(' - ')[1] # ie 'stations', 'legs', etc
                     layer_type = layer.wkbType() # override type to keep z-dimension data
                     override_type = self.type_convert[layer_type] if layer_type in self.type_convert else QgsWKBTypes.Unknown
-                    writer = QgsVectorFileWriter.writeAsVectorFormat(layer, output_dir + shape_file, 'utf-8',
-                                                                     layer.crs(), 'ESRI Shapefile',
+                    writer = QgsVectorFileWriter.writeAsVectorFormat(layer, singlelayer_gpkg, 'utf-8', layer.crs(), 'GPKG',
                                                                      overrideGeometryType=override_type, includeZ=True)
-                    msg = layer.name() + ' to ' + shape_file + ' in ' + output_dir
                     if writer == QgsVectorFileWriter.NoError:
-                        self.iface.messageBar().pushMessage('Layer Saved', msg, level=QgsMessageBar.INFO, duration=1)
+                        sf = ogr.Open(singlelayer_gpkg) # re-open the single-layer GeoPackage 
+                        lr = sf.GetLayerByIndex(0) # extract the layer it contains
+                        ds.CopyLayer(lr, str(layer_name), []) # and copy into the multilayer GeoPackage
                     else:
                         self.iface.messageBar().pushMessage('Error saving layer', msg, level=QgsMessageBar.CRITICAL, duration=3)
 
-        # End of if results in run function
+                ds = None # flush data to disk
+
+                os.unlink(singlelayer_gpkg) # remove temporary file
+
+                msg = 'to ' + multilayer_gpkg + ' in ' + self.dlg.selectedDir.text()
+                QgsMessageLog.logMessage('Layers saved ' + msg, tag='Import .3d', level=QgsMessageLog.INFO)
+                self.iface.messageBar().pushMessage('Layers Saved', msg, level=QgsMessageBar.INFO, duration=3)
+
+            # End of save to GeoPackage
+
+        # End of results in run function
 
     # End of run function definition
 

@@ -10,7 +10,7 @@ typically by survex &ge; 1.2.14._
 * features carry _z_ dimension (elevation) data ;
 * create passage walls, cross-sections, and polygons from LRUD data ;
 * CRS can be set from PROJ.4 string embedded in .3d file ;
-* batch save results with full metadata to ESRI shapefiles.
+* save results with full metadata to a GeoPackage (.gpkg) file.
 
 ### Installation
 
@@ -41,7 +41,7 @@ window for the user to select a .3d file with a number of options:
     - as traverses, showing the centrelines used for above ;
 * Get CRS from .3d file if possible ;
 * Keep features from previous import(s) ;
-* (optional) Select a directory to batch save results as ESRI shapefiles ;
+* (optional) Select a directory in case of saving as a GeoPackage file ;
 * (optional) Set a title.
   
 (\*) In rare cases a station may be flagged both surface and underground,
@@ -61,11 +61,11 @@ not result in features being overwritten, even if they happen to share
 the same name, since all features are assigned a unique ID.
 
 If a directory is selected then the newly-created layers are saved
-into ESRI shapefiles in that directory.  The directory is created if
-it doesn't already exist.  The file names are derived from the layer
-names (see next), with all non-word characters except numbers and
-letters removed and all whitespace converted to underscores. The
-shapefiles are inclusive of all attributes and _z_ dimension data.
+into a GeoPackage file in that directory.  The directory is created if
+it doesn't already exist.  The file name is the same as the layer
+title (without subtitles), except all non-word characters are removed
+and all whitespace converted to underscores. The files is inclusive of
+all attributes and _z_ dimension data.
 
 If a title is entered, then layers are created with this title, and
 a subtitle to reflect the content (stations, legs, etc).  Otherwise
@@ -225,9 +225,9 @@ the 'map tip', etc.
 Three dimensional views can be made with the Qgis2threejs plugin,
 usually in combination with a DEM.  To render features in 3d _either_
 use the ELEVATION attribute to set the absolute height, _or_ (better)
-save the imported data to shapefile(s) and re-import so that
-Qgis2threejs knows about the _z_ dimension data and can use it to
-inform the rendering.
+save the imported data to a shapefile (eg as a GeoPackage) and
+re-import so that QGIS knows about the _z_ dimension data and
+can pass it on to the plugin to inform the rendering.
 
 Passage 'tubes' in aven can be approximately rendered using polygons,
 with the base set to floor level and the extruded height set to roof
