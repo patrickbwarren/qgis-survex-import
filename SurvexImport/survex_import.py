@@ -14,10 +14,6 @@
 File parser based on a library to handle Survex 3D files (*.3d) 
 Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
 
-Batch save loosely based on Batch Save Layers plugin 
-copyright (C) 2016 Robert Spiers
-http://rjspiers.github.io/qgis-batch-save-layers/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -740,38 +736,37 @@ class SurvexImport:
                 if os.path.exists(gpkg_file):
                     gpkg_driver.DeleteDataSource(gpkg_file)
 
-                out_dataset = gpkg_driver.CreateDataSource(gpkg_file)
+                ogr_dataset = gpkg_driver.CreateDataSource(gpkg_file)
 
                 if self.epsg: # figure out the spatial reference system in OGR terms
-                    out_srs = osr.SpatialReference()
-                    out_srs.ImportFromEPSG(self.epsg)
+                    ogr_srs = osr.SpatialReference()
+                    ogr_srs.ImportFromEPSG(self.epsg)
                 else:
-                    out_srs = None
+                    ogr_srs = None
 
                 for layer in layers:
 
-                    layer_name = layer.name()
-                    match = search(' - ([a-z]*)', layer_name)
-                    out_name = str(match.group(1)) if match else layer_name # ie, legs, stations, etc
-                    out_type = self.ogr_vec_type[layer.wkbType()]
-                    out_layer = out_dataset.CreateLayer(out_name, srs=out_srs, geom_type=out_type)
+                    qgis_name = layer.name()
+                    match = search(' - ([a-z]*)', qgis_name)
+                    ogr_name = str(match.group(1)) if match else qgis_name # ie, legs, stations, etc
+                    ogr_type = self.ogr_vec_type[layer.wkbType()]
+                    ogr_layer = ogr_dataset.CreateLayer(ogr_name, srs=ogr_srs, geom_type=ogr_type)
 
-                    fields = layer.pendingFields()
-                    names = [str(field.name()) for field in fields]
-                    types = [self.ogr_type[field.type()] for field in fields]
+                    qgis_fields = layer.pendingFields()
+                    names = [str(field.name()) for field in qgis_fields]
+                    types = [self.ogr_type[field.type()] for field in qgis_fields]
                     ogr_type_of_ = dict(zip(names, types)) # map field names to OGR field types
 
-                    [ out_layer.CreateField(ogr.FieldDefn(name, ogr_type_of_[name])) for name in names ]
+                    [ ogr_layer.CreateField(ogr.FieldDefn(name, ogr_type_of_[name])) for name in names ]
 
-                    out_schema = out_layer.GetLayerDefn() # for creating features in the OGR layer
+                    ogr_schema = ogr_layer.GetLayerDefn() # for creating features in the OGR layer
 
-                    for feat in layer.getFeatures():
+                    for qgis_feat in layer.getFeatures():
 
-                        out_feat = ogr.Feature(out_schema)
+                        ogr_feat = ogr.Feature(ogr_schema)
 
-                        wkt = feat.geometry().exportToWkt().replace(*self.wkt_replace[out_type])
-                        out_geom = ogr.CreateGeometryFromWkt(wkt)
-                        out_feat.SetGeometry(out_geom)
+                        ogr_wkt = qgis_feat.geometry().exportToWkt().replace(*self.wkt_replace[ogr_type])
+                        ogr_feat.SetGeometry(ogr.CreateGeometryFromWkt(ogr_wkt))
 
                         # It's possible the next bit could be done
                         # more efficiently by iterating numerically
@@ -779,19 +774,19 @@ class SurvexImport:
                         # features would be visited in the right order, so
                         # use the field names as indices.
 
-                        attrs = feat.attributes()
+                        qgis_attrs = qgis_feat.attributes()
 
-                        for name, attr in zip(names, attrs):
+                        for name, qgis_attr in zip(names, qgis_attrs):
                             if ogr_type_of_[name] == ogr.OFTString: # fix for strings
-                                out_feat.SetField(name, str(attr))
+                                ogr_feat.SetField(name, str(qgis_attr))
                             elif ogr_type_of_[name] == ogr.OFTDate: # translate dates
-                                out_feat.SetField(name, str(attr.toString(Qt.ISODate)))
+                                ogr_feat.SetField(name, str(qgis_attr.toString(Qt.ISODate)))
                             else: # everything else just passes through
-                                out_feat.SetField(name, attr)
+                                ogr_feat.SetField(name, qgis_attr)
 
-                        out_layer.CreateFeature(out_feat)
+                        ogr_layer.CreateFeature(ogr_feat)
 
-                out_dataset = None # all done, flush to disk
+                ogr_dataset = None # all done, flush to disk
 
                 QgsMessageLog.logMessage('Saved ' + gpkg_file, tag='Import .3d', level=QgsMessageLog.INFO)
                 self.iface.messageBar().pushMessage('Saved', gpkg_file, level=QgsMessageBar.INFO, duration=3)

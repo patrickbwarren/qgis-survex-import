@@ -260,10 +260,6 @@ The .3d file parser is based on a GPL v2 library to handle Survex 3D files (`*.3
 copyright &copy; 2008-2012 Thomas Holder, http://sf.net/users/speleo3/; 
 see https://github.com/speleo3/inkscape-speleo.
 
-Batch save based on GPLv2 code in Batch Save Layers QGIS plugin 
-copyright &copy; 2016 Robert Spiers. See
-http://rjspiers.github.io/qgis-batch-save-layers/
-
 Modifications and extensions copyright &copy; (2017, 2018) Patrick B Warren.
 
 
