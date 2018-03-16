@@ -561,7 +561,7 @@ class SurvexImport:
                 
                 for xsect in self.xsect_list:
 
-                    if len(xsect) < 2: # bail out if there's only one station in the xsect
+                    if len(xsect) < 2: # if there's only one station we don't know which way we're facing
                         continue
 
                     centerline = [] # will contain the station position and LRUD data
