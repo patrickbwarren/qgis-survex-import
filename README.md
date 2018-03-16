@@ -41,7 +41,7 @@ window for the user to select a .3d file with a number of options:
     - as traverses, showing the centrelines used for above ;
 * Get CRS from .3d file if possible ;
 * Keep features from previous import(s) ;
-* (optional) Select a GeoPackage (.gpkg) file to save results (optional).
+* Select a GeoPackage (.gpkg) file to save results (optional).
   
 (\*) In rare cases a station may be flagged both surface and
 underground, in which case it is imported even if the 'surface' option
