@@ -10,7 +10,7 @@ typically by survex &ge; 1.2.14._
 * features carry _z_ dimension (elevation) data ;
 * create passage walls, cross-sections, and polygons from LRUD data ;
 * CRS can be set from PROJ.4 string embedded in .3d file ;
-* save results with full metadata to a GeoPackage (.gpkg) file.
+* save results into a GeoPackage (.gpkg) shapefile.
 
 ### Installation
 
@@ -41,16 +41,17 @@ window for the user to select a .3d file with a number of options:
     - as traverses, showing the centrelines used for above ;
 * Get CRS from .3d file if possible ;
 * Keep features from previous import(s) ;
-* (optional) Select a directory in case of saving as a GeoPackage file ;
-* (optional) Set a title.
+* (optional) Select a GeoPackage (.gpkg) file to save results (optional).
   
-(\*) In rare cases a station may be flagged both surface and underground,
-in which case it is imported even if the 'surface' option is left
-unchecked.
+(\*) In rare cases a station may be flagged both surface and
+underground, in which case it is imported even if the 'surface' option
+is left unchecked. 
 
 On clicking OK, vector layers are created to contain the imported
-features as desired.  Legs, walls, cross sections, and traverses are 
+features as desired.  Legs, walls, cross sections, and traverses are
 imported as line strings in separate vector layers for convenience.
+All created layers are saved to the GeoPackage file if requested (any
+existing content is overwritten).
 
 If 'keep features' is selected, then previously imported features are
 not discarded, and the newly-created layers will contain both the
@@ -59,18 +60,6 @@ designated .3d file.  This choice allows processed survey data sets to
 be combined from multiple sources.  Note that cumulative imports do
 not result in features being overwritten, even if they happen to share
 the same name, since all features are assigned a unique ID.
-
-If a directory is selected then the newly-created layers are saved
-into a GeoPackage file in that directory.  The directory is created if
-it doesn't already exist.  The file name is the same as the layer
-title (without subtitles), except all non-word characters are removed
-and all whitespace converted to underscores. The files is inclusive of
-all attributes and _z_ dimension data.
-
-If a title is entered, then layers are created with this title, and
-a subtitle to reflect the content (stations, legs, etc).  Otherwise
-the title is obtained from the survey title(s) extracted from the .3d
-file(s).  To set this specifically, use *title in the survex file.
 
 #### Imported attributes
 
@@ -117,7 +106,8 @@ features include _z_ dimensions.  To ensure the _z_ dimension data is
 correctly incorporated when saving layers by hand, in the 'Save as
 ...'  dialog make sure that the geometry type is specified (ie 'Point'
 for stations, 'Polygon' for polygons, and 'LineString' for everything
-else) and the 'Include _z_ dimension' box is checked.
+else) and the 'Include _z_ dimension' box is checked.  This is done
+automatically when saving to the GeoPackage file if requested.
 
 #### Passage walls
 
@@ -239,6 +229,9 @@ _z_ co-ordinate as the absolute FLOOR, and extruded height as HEIGHT.
 
 Sample georeferenced survey data can be found in
 [`DowProv.3d`](DowProv/DowProv.3d).
+
+The corresponding GeoPackage file is
+[`DowProv.gpkg`](DowProv/DowProv.gpkg).
 
 Further notes on cave surveying and GIS are in 
 [`cave_surveying_and_GIS.pdf`](cave_surveying_and_GIS.pdf).
