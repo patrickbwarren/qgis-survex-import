@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>415</width>
-    <height>503</height>
+    <height>454</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>460</y>
+     <y>410</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -272,7 +272,7 @@
     <string>Keep features from previous import(s)</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="selectedDir">
+  <widget class="QLineEdit" name="selectedGPKG">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -295,36 +295,10 @@
     </rect>
    </property>
    <property name="text">
-    <string>Select a directory to batch save results (optional)</string>
+    <string>GeoPackage (.gpkg) file to save results (optional)</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>400</y>
-     <width>361</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Set title (leave blank for default)</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="chosenTitle">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>420</y>
-     <width>321</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Set destination folder</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="dirSelector">
+  <widget class="QPushButton" name="GPKGSelector">
    <property name="geometry">
     <rect>
      <x>350</x>

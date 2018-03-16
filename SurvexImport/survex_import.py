@@ -31,7 +31,7 @@ from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFi
 from PyQt4.QtGui import QAction, QIcon, QFileDialog
 from qgis.gui import QgsMessageBar
 from qgis.core import *
-from PyQt4.QtCore import QVariant, QDate
+from PyQt4.QtCore import QVariant, QDate, Qt
 from qgis.core import QgsVectorFileWriter
 # Initialize Qt resources from file resources.py
 import resources
@@ -41,44 +41,68 @@ from survex_import_dialog import SurvexImportDialog
 import os
 from tempfile import NamedTemporaryFile
 
-from osgeo.osr import SpatialReference
+from osgeo import osr
 from osgeo import ogr
+
 from struct import unpack
-from re import sub, search
+from re import search
 from math import sqrt # needed for LRUD wall calculations
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
 
-    type_convert = {QGis.WKBPoint: QgsWKBTypes.PointZ,
-                    QGis.WKBLineString: QgsWKBTypes.LineStringZ,
-                    QGis.WKBPolygon: QgsWKBTypes.PolygonZ}
+    # The following are some dictionaries for flags in the .3d file
+
+    station_attr = {0x01:'SURFACE', 0x02:'UNDERGROUND', 0x04:'ENTRANCE',
+                    0x08:'EXPORTED', 0x10:'FIXED', 0x20:'ANON'}
+
+    leg_attr = {0x01:'SURFACE', 0x02:'DUPLICATE', 0x04:'SPLAY'}
 
     style_type = {0x00:'NORMAL', 0x01:'DIVING', 0x02:'CARTESIAN',
                   0x03:'CYLPOLAR', 0x04:'NOSURVEY', 0xff:'NOSTYLE'}
 
-    leg_attr = {0x01:'SURFACE', 0x02:'DUPLICATE', 0x04:'SPLAY'}
-    leg_flags = sorted(leg_attr.keys())
-    
-    station_attr = {0x01:'SURFACE', 0x02:'UNDERGROUND', 0x04:'ENTRANCE',
-                    0x08:'EXPORTED', 0x10:'FIXED', 0x20:'ANON'}
+    # lists of keys of above, sorted to restore ordering
+
     station_flags = sorted(station_attr.keys())
-            
-    leg_list = []
-    station_list = []
-    station_xyz = {}
-    xsect_list = []
-    title = ''
-    path = ''
+    leg_flags = sorted(leg_attr.keys())
+
+    # field names if there is error data
+
+    error_fields = ('ERROR_VERT', 'ERROR_HORIZ', 'ERROR', 'LENGTH')
+
+    # map from QGIS geometry type to OGR geometry type with z dimension
+
+    ogr_vec_type = {QGis.WKBPoint: ogr.wkbPoint25D,
+                    QGis.WKBLineString: ogr.wkbLineString25D,
+                    QGis.WKBPolygon: ogr.wkbPolygon25D}
+
+    # map from QGIS field type to OGR field type
+
+    ogr_type = {QVariant.Int: ogr.OFTInteger,
+                QVariant.Double: ogr.OFTReal,
+                QVariant.String: ogr.OFTString,
+                QVariant.Date: ogr.OFTDate}
+
+    # replacements needed for QGIS geometry WKT, indexed by OGR geometry type
+
+    wkt_replace = {ogr.wkbPoint25D: ('PointZ', 'POINT'),
+                   ogr.wkbLineString25D: ('LineStringZ', 'LINESTRING'),
+                   ogr.wkbPolygon25D: ('PolygonZ', 'POLYGON')}
+
+    leg_list = [] # accumulates legs + metadata
+    station_list = [] # ditto stations
+    xsect_list = [] # ditto for cross sections for walls
+
+    station_xyz = {} # map station names to xyz coordinates
+
+    epsg = None # will be defined in CRS picked up from file
+    title = '' # will be reset from file
+
+    path_3d = '' # to remember the path to the survex .3d file
+    path_gpkg = '' # ditto for path to save GeoPackage (.gpkg)
 
     def __init__(self, iface):
-        """Constructor.
-
-        :param iface: An interface instance that will be passed to this class
-            which provides the hook by which you can manipulate the QGIS
-            application at run time.
-        :type iface: QgsInterface
-        """
+        """Constructor"""
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
@@ -110,74 +134,21 @@ class SurvexImport:
         self.dlg.selectedFile.clear()
         self.dlg.fileSelector.clicked.connect(self.select_3d_file)
         
-        self.dlg.selectedDir.clear()
-        self.dlg.dirSelector.clicked.connect(self.select_dir)
+        self.dlg.selectedGPKG.clear()
+        self.dlg.GPKGSelector.clicked.connect(self.select_gpkg)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-
-        We implement this ourselves since we do not inherit QObject.
-
-        :param message: String for translation.
-        :type message: str, QString
-
-        :returns: Translated version of message.
-        :rtype: QString
-        """
+        """Get the translation for a string using Qt translation API."""
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('SurvexImport', message)
 
 
-    def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
-        """Add a toolbar icon to the toolbar.
-
-        :param icon_path: Path to the icon for this action. Can be a resource
-            path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
-        :type icon_path: str
-
-        :param text: Text that should be shown in menu items for this action.
-        :type text: str
-
-        :param callback: Function to be called when the action is triggered.
-        :type callback: function
-
-        :param enabled_flag: A flag indicating if the action should be enabled
-            by default. Defaults to True.
-        :type enabled_flag: bool
-
-        :param add_to_menu: Flag indicating whether the action should also
-            be added to the menu. Defaults to True.
-        :type add_to_menu: bool
-
-        :param add_to_toolbar: Flag indicating whether the action should also
-            be added to the toolbar. Defaults to True.
-        :type add_to_toolbar: bool
-
-        :param status_tip: Optional text to show in a popup when mouse pointer
-            hovers over the action.
-        :type status_tip: str
-
-        :param parent: Parent widget for the new action. Defaults None.
-        :type parent: QWidget
-
-        :param whats_this: Optional text to show in the status bar when the
-            mouse pointer hovers over the action.
-
-        :returns: The action that was created. Note that the action is also
-            added to self.actions list.
-        :rtype: QAction
-        """
+    def add_action(self, icon_path, text, callback,
+                   enabled_flag=True, add_to_menu=True,
+                   add_to_toolbar=True, status_tip=None,
+                   whats_this=None, parent=None):
+        """Add a toolbar icon to the toolbar."""
 
         # Create the dialog (after translation) and keep reference
         # self.dlg = SurvexImportDialog()
@@ -227,13 +198,17 @@ class SurvexImport:
         del self.toolbar
 
     def select_3d_file(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ", self.path,  '*.3d')
-        self.dlg.selectedFile.setText(filename)
-        self.path = QFileInfo(filename).path() # memorise path selection
+        """Action to select 3d file"""
+        file_3d = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ", self.path_3d, '*.3d')
+        self.dlg.selectedFile.setText(file_3d)
+        self.path_3d = QFileInfo(file_3d).path() # memorise path selection
 
-    def select_dir(self):
-        savedir = QFileDialog.getExistingDirectory(self.dlg, "Select directory for ESRI shapefiles", self.path)
-        self.dlg.selectedDir.setText(savedir)
+    def select_gpkg(self):
+        """Action to select GeoPackage (.gpkg)"""
+        file_gpkg = QFileDialog.getSaveFileName(self.dlg, "Enter or select existing .gpkg file ",
+                                                self.path_gpkg, '*.gpkg')
+        self.dlg.selectedGPKG.setText(file_gpkg)
+        self.path_gpkg = QFileInfo(file_gpkg).path() # memorise path selection
 
     # << perfection is achieved not when nothing more can be added 
     #      but when nothing more can be taken away >>
@@ -246,26 +221,26 @@ class SurvexImport:
 
     def extract_epsg(self, proj4string):
         """Extract EPSG number from PROJ.4 string using GDAL tools"""
-        srs = SpatialReference()
-        epsg_match = search('epsg:([0-9]*)', proj4string)
-        if epsg_match:
-            return_code = srs.ImportFromEPSG(int(epsg_match.group(1)))
+        srs = osr.SpatialReference()
+        match = search('epsg:([0-9]*)', proj4string)
+        if match:
+            return_code = srs.ImportFromEPSG(int(match.group(1)))
         else:
             return_code = srs.ImportFromProj4(proj4string)
         if return_code:
             raise Exception("Invalid proj4 string: " + proj4string)
         code = srs.GetAttrValue('AUTHORITY', 1)
-        epsg = int(code)
-        msg = "PROJ.4 %s --> EPSG:%i" % (proj4string, epsg)
+        srs = None
+        self.epsg = int(code)
+        msg = "PROJ.4 %s --> EPSG:%i" % (proj4string, self.epsg)
         QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
-        return epsg
 
     # Note that 'PointZ', 'LineStringZ', 'PolygonZ' are not possible
     # in QGIS 2.18 However the z-dimension data is respected.
 
-    def add_layer(self, subtitle, geom, epsg):
+    def add_layer(self, subtitle, geom):
         """Add a memory layer with title and geom 'Point' or 'LineString'"""
-        uri = '%s?crs=epsg:%i' % (geom, epsg) if epsg else geom
+        uri = '%s?crs=epsg:%i' % (geom, self.epsg) if self.epsg else geom
         name = '%s - %s' % (self.title, subtitle) if self.title else subtitle
         layer =  QgsVectorLayer(uri, name, 'memory')
         if not layer.isValid():
@@ -305,12 +280,10 @@ class SurvexImport:
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
-        if result:
-
-            # This is where all the work is done.
+        if result: # This is where all the work is done.
 
             survex3dfile = self.dlg.selectedFile.text()
-            chosen_title = self.dlg.chosenTitle.text()
+            gpkg_file = self.dlg.selectedGPKG.text()
 
             include_legs = self.dlg.checkLegs.isChecked()
             include_stations = self.dlg.checkStations.isChecked()
@@ -347,65 +320,70 @@ class SurvexImport:
                 line = fp.readline().rstrip() # File ID check
                 
                 if not line.startswith(b'Survex 3D Image File'):
-                    raise IOError('Not a Survex 3D File: ' + survex3dfile)
+                    raise IOError('Not a survex .3d file: ' + survex3dfile)
 
                 line = fp.readline().rstrip() # File format version
                 
                 if not line.startswith(b'v'):
-                    raise IOError('Unrecognised .3d version: ' + survex3dfile)
+                    raise IOError('Unrecognised survex .3d version in ' + survex3dfile)
                 
                 version = int(line[1:])
                 if version < 8:
-                    raise IOError('Version >= 8 required: ' + survex3dfile)
+                    raise IOError('Survex .3d version >= 8 required in ' + survex3dfile)
 
                 line = fp.readline().rstrip() # Metadata (title and coordinate system)
                 fields = line.split(b'\x00')
 
-                if chosen_title:
-                    self.title = chosen_title
+                previous_title = '' if discard_features else self.title
+
+                if previous_title:
+                    self.title = previous_title + ' + ' + fields[0];
                 else:
-                    previous_title = '' if discard_features else self.title
-                    if previous_title:
-                        self.title = previous_title + ' + ' + fields[0];
-                    else:
-                        self.title = fields[0];
+                    self.title = fields[0];
 
-                # Try to work out EPSG number from CS if available and asked-for
-                
-                epsg = self.extract_epsg(fields[1]) if get_crs and len(fields) > 1 else None
+                # Try to work out EPSG number from CS if available and requested
 
-                line = fp.readline().rstrip() # Timestamp (not used)
+                if get_crs and len(fields) > 1:
+                    self.extract_epsg(fields[1])
+                else:
+                    self.epsg = None
+
+                line = fp.readline().rstrip() # Timestamp
                 
                 if not line.startswith(b'@'):
-                    raise IOError('Unrecognised timestamp: ' + survex3dfile)
+                    raise IOError('Unrecognised timestamp in ' + survex3dfile)
                 
                 timestamp = int(line[1:]) # Saved, but not used at present
 
                 # System-wide flags - abort if extended elevation
 
-                flag = ord(fp.read(1))
+                flag = ord(fp.read(1)) # file-wide flag
 
-                if flag & 0x80:
-                    raise IOError('Extended elevation: ' + survex3dfile)
+                if flag & 0x80: # bail out if extended elevation
+                    raise IOError("Can't deal with extended elevation in " + survex3dfile)
 
                 # All front-end data read in, now read byte-wise
                 # according to .3d spec.  Note that all elements must
-                # be processed, in order, otherwise we get out of sync
-    
-                date0 = date1 = date2 = QDate(1900, 1, 1)
+                # be processed, in order, otherwise we get out of sync.
 
-                label, style = '', 0xff
+                # We first define some baseline dates
+    
+                date0 = QDate(1900, 1, 1)
+                date1 = QDate(1900, 1, 1)
+                date2 = QDate(1900, 1, 1)
+
+                label, style = '', 0xff # initialise label and style
                 
                 legs = [] # will be used to capture leg data between MOVEs
                 xsect = [] # will be used to capture XSECT data
-                nlehv = None # In case there isn't any
-                    
-                while True:
+                nlehv = None # .. remains None if there isn't any...
+
+                while True: # start of byte-gobbling while loop
 
                     char = fp.read(1)
 
                     if not char: # End of file reached (prematurely?)
-                        raise IOError('Premature end of file: ' + survex3dfile)
+                        raise IOError('Premature end of file in ' + survex3dfile)
 
                     byte = ord(char)
 
@@ -472,7 +450,7 @@ class SurvexImport:
                             label = self.read_label(fp, label)
                         xyz_prev = xyz
                         xyz = self.read_xyz(fp)
-                        while (True):
+                        while (True): # code pattern to implement logic
                             if exclude_surface_legs and flag & 0x01: break
                             if exclude_duplicate_legs and flag & 0x02: break
                             if exclude_splay_legs and flag & 0x04: break
@@ -483,7 +461,7 @@ class SurvexImport:
                         flag = byte & 0x7f
                         label = self.read_label(fp, label)
                         xyz = self.read_xyz(fp)
-                        while (True):
+                        while (True): # code pattern to implement logic
                             if exclude_surface_stations and flag & 0x01 and not flag & 0x02: break
                             self.station_list.append((xyz, label, flag))
                             break
@@ -496,13 +474,13 @@ class SurvexImport:
             # Now create the layers in QGIS.  Attributes are inserted
             # like pushing onto a stack, so in reverse order.  Layers
             # are created only if required and data is available.
-            # If nlehv is not None, then error data has been provided.
+            # If nlehv is still None, then no error data has been provided.
             
             layers = [] # used to keep a list of the created layers
 
-            if include_stations and self.station_list:
+            if include_stations and self.station_list: # station layer
                 
-                station_layer = self.add_layer('stations', 'Point', epsg)
+                station_layer = self.add_layer('stations', 'Point')
     
                 attrs = [QgsField(self.station_attr[k], QVariant.Int) for k in self.station_flags]
                 attrs.insert(0, QgsField('ELEVATION', QVariant.Double))
@@ -526,13 +504,13 @@ class SurvexImport:
                 station_layer.dataProvider().addFeatures(features)
                 layers.append(station_layer)
 
-            if include_legs and self.leg_list:
+            if include_legs and self.leg_list: # leg layer
                 
-                leg_layer = self.add_layer('legs', 'LineString', epsg)
+                leg_layer = self.add_layer('legs', 'LineString')
                 
                 attrs = [QgsField(self.leg_attr[k], QVariant.Int) for k in self.leg_flags]
                 if nlehv:
-                    [ attrs.insert(0, QgsField(s, QVariant.Double)) for s in ('ERROR_VERT', 'ERROR_HORIZ', 'ERROR', 'LENGTH')]
+                    [ attrs.insert(0, QgsField(s, QVariant.Double)) for s in self.error_fields ]
                     attrs.insert(0, QgsField('NLEGS', QVariant.Int))
                 attrs.insert(0, QgsField('DATE2', QVariant.Date))
                 attrs.insert(0, QgsField('DATE1', QVariant.Date))
@@ -571,6 +549,8 @@ class SurvexImport:
                 leg_layer.dataProvider().addFeatures(features)
                 layers.append(leg_layer)
 
+            # Now do walls if required
+
             # The calculations below use integers for xyz and lrud, and
             # conversion to metres is left to the end.  Then dh2 is an
             # integer and the test for a plumb is safely dh2 = 0.
@@ -585,10 +565,10 @@ class SurvexImport:
                 
                 for xsect in self.xsect_list:
 
-                    if len(xsect) < 2: # bail out if there's only one station
+                    if len(xsect) < 2: # bail out if there's only one station in the xsect
                         continue
 
-                    centerline = [] # will contain the station position and LR data
+                    centerline = [] # will contain the station position and LRUD data
 
                     for label, lrud in xsect:
                         xyz = self.station_xyz[label] # look up coordinates from label
@@ -597,10 +577,9 @@ class SurvexImport:
 
                     direction = [] # will contain the corresponding direction vectors
 
-                    # The directions are unit vectors optionally
-                    # weighted by cos(inclination) = dh/dl where
-                    # dh^2 = dx^2 + dy^2 + dz^2 and dl^2 = dh^2 +
-                    # dz^2.  The normalisation is correspondingly
+                    # The directions are unit vectors optionally weighted by
+                    # cos(inclination) = dh/dl where dh^2 = dx^2 + dy^2 + dz^2
+                    # and dl^2 = dh^2 + dz^2.  The normalisation is correspondingly
                     # either 1/dh, or 1/dh * dh/dl = 1/dl.
 
                     for i, xyzlrud in enumerate(centerline):
@@ -670,15 +649,13 @@ class SurvexImport:
                     # and right walls, and build a cross section as a
                     # 2-point line string, and a quadrilateral polygon
                     # with a closed 5-point line string for the
-                    # exterior ring.  Note that polygons in QGIS are
+                    # exterior ring.  Note that QGIS polygons are
                     # supposed to have their points ordered clockwise.
 
                     for i, xyz_pair in enumerate(zip(left_wall, right_wall)):
 
                         elev = 0.01 * centerline[i][2] # elevation of station in centerline
                         attrs = [round(elev, 2)]
-#                        if include_up_down:
-#                            attrs += list(up_down[i])
                         points = [QgsPointV2(QgsWKBTypes.PointZ, *xyz) for xyz in xyz_pair]
                         linestring = QgsLineStringV2()
                         linestring.setPoints(points)
@@ -693,7 +670,7 @@ class SurvexImport:
                             attrs = [round(elev, 2)]
                             if include_up_down: # average up / down
                                 attrs += [ 0.5*(v1+v2) for (v1, v2) in zip(up_down[i-1], up_down[i]) ]
-                            points = []
+                            points = [] # will contain the exterior 5-point ring, as follows...
                             for xyz in tuple(reversed(prev_xyz_pair)) + xyz_pair + (prev_xyz_pair[1],):
                                 points.append(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
                             linestring = QgsLineStringV2()
@@ -712,22 +689,22 @@ class SurvexImport:
 
                 attrs = [QgsField('ELEVATION', QVariant.Double)] # common to first two
 
-                if include_traverses and trav_features:
-                    travs_layer = self.add_layer('traverses', 'LineString', epsg)
+                if include_traverses and trav_features: # traverse layer
+                    travs_layer = self.add_layer('traverses', 'LineString')
                     travs_layer.dataProvider().addAttributes(attrs)
                     travs_layer.updateFields()
                     travs_layer.dataProvider().addFeatures(trav_features)
                     layers.append(travs_layer)
 
-                if include_xsections and xsect_features:
-                    xsects_layer = self.add_layer('xsections', 'LineString', epsg)
+                if include_xsections and xsect_features: # xsection layer
+                    xsects_layer = self.add_layer('xsections', 'LineString')
                     xsects_layer.dataProvider().addAttributes(attrs)
                     xsects_layer.updateFields()
                     xsects_layer.dataProvider().addFeatures(xsect_features)
                     layers.append(xsects_layer)
 
-                if include_walls and wall_features:
-                    walls_layer = self.add_layer('walls', 'LineString', epsg)
+                if include_walls and wall_features: # wall layer
+                    walls_layer = self.add_layer('walls', 'LineString')
                     walls_layer.dataProvider().addAttributes(attrs)
                     walls_layer.updateFields()
                     walls_layer.dataProvider().addFeatures(wall_features)
@@ -736,77 +713,88 @@ class SurvexImport:
                 if include_up_down: # if requested for polygons
                     attrs += [QgsField(s, QVariant.Double) for s in ('MEAN_UP', 'MEAN_DOWN') ]
 
-                if include_polygons and quad_features:
-                    quads_layer = self.add_layer('polygons', 'Polygon', epsg)
+                if include_polygons and quad_features: # polygon layer
+                    quads_layer = self.add_layer('polygons', 'Polygon')
                     quads_layer.dataProvider().addAttributes(attrs)
                     quads_layer.updateFields()
                     quads_layer.dataProvider().addFeatures(quad_features)
                     layers.append(quads_layer)
 
-            # End of adding polygons and/or walls - now add all created layers
+            # All layers have been created, now update extents and add to QGIS registry
 
             if layers:
                 [ layer.updateExtents() for layer in layers ]
                 QgsMapLayerRegistry.instance().addMapLayers(layers)
 
-            # Save layers to a GeoPackage if directory has been
-            # selected.  The complicated fudge here is because
-            # QgsVectorFileWriter can only write single layers
-            # (afaik!), so we use a temporary GeoPackage to save each
-            # individual layer, then reload them using OGR and save
-            # the layers cumulatively into the final GeoPackage.
-            
-            # The right way to do this would be to use OGR to create
-            # each layer and add the features and attributes from the
-            # memory layers in QGIS.
+            # Save layers to a GeoPackage if selected.
 
-            if self.dlg.selectedDir.text():
-                
-                output_dir = self.dlg.selectedDir.text() + '/'
+            # QgsVectorFileWriter would be ideal but it can only write
+            # single layers (afaik!), so the GeoPackage layers,
+            # fields, and attributes are created using OGR calls,
+            # translating the corresponding QGIS objects on the fly.
 
-                if not os.path.exists(output_dir): # create if directory doesn't exist
-                    os.makedirs(output_dir)
-                    msg = "Created " + tmp_gpkg
-                    QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
+            if gpkg_file:
 
-                multilayer_gpkg = self.title # construct file name for GeoPackage
-                multilayer_gpkg = sub(r'[^\w\s]', '', multilayer_gpkg) # remove non-word characters except numbers and letters
-                multilayer_gpkg = sub(r'\s+', '_', multilayer_gpkg) # replace white space with underscores
-                multilayer_gpkg += '.gpkg'
+                gpkg_driver = ogr.GetDriverByName('GPKG')
 
-                f = NamedTemporaryFile(suffix='.gpkg', delete=False) # to hold single layers temporarily
-                singlelayer_gpkg = f.name
-                f.close()
+                if os.path.exists(gpkg_file):
+                    gpkg_driver.DeleteDataSource(gpkg_file)
 
-                if not os.path.exists(singlelayer_gpkg):
-                    raise Exception("Couldn't create temporary file")
+                out_dataset = gpkg_driver.CreateDataSource(gpkg_file)
 
-                out_path = output_dir + multilayer_gpkg
-                dr = ogr.GetDriverByName('GPKG') # to hold multiple layers
-                if os.path.exists(out_path):
-                    dr.DeleteDataSource(out_path)
-                ds = dr.CreateDataSource(out_path)
+                if self.epsg: # figure out the spatial reference system in OGR terms
+                    out_srs = osr.SpatialReference()
+                    out_srs.ImportFromEPSG(self.epsg)
+                else:
+                    out_srs = None
 
                 for layer in layers:
-                    layer_name = layer.name().split(' - ')[1] # ie 'stations', 'legs', etc
-                    layer_type = layer.wkbType() # override type to keep z-dimension data
-                    override_type = self.type_convert[layer_type] if layer_type in self.type_convert else QgsWKBTypes.Unknown
-                    writer = QgsVectorFileWriter.writeAsVectorFormat(layer, singlelayer_gpkg, 'utf-8', layer.crs(), 'GPKG',
-                                                                     overrideGeometryType=override_type, includeZ=True)
-                    if writer == QgsVectorFileWriter.NoError:
-                        sf = ogr.Open(singlelayer_gpkg) # re-open the single-layer GeoPackage 
-                        lr = sf.GetLayerByIndex(0) # extract the layer it contains
-                        ds.CopyLayer(lr, str(layer_name), []) # and copy into the multilayer GeoPackage
-                    else:
-                        self.iface.messageBar().pushMessage('Error saving layer', msg, level=QgsMessageBar.CRITICAL, duration=3)
 
-                ds = None # flush data to disk
+                    layer_name = layer.name()
+                    match = search(' - ([a-z]*)', layer_name)
+                    out_name = str(match.group(1)) if match else layer_name # ie, legs, stations, etc
+                    out_type = self.ogr_vec_type[layer.wkbType()]
+                    out_layer = out_dataset.CreateLayer(out_name, srs=out_srs, geom_type=out_type)
 
-                os.unlink(singlelayer_gpkg) # remove temporary file
+                    fields = layer.pendingFields()
+                    names = [str(field.name()) for field in fields]
+                    types = [self.ogr_type[field.type()] for field in fields]
+                    ogr_type_of_ = dict(zip(names, types)) # map field names to OGR field types
 
-                msg = 'to ' + multilayer_gpkg + ' in ' + self.dlg.selectedDir.text()
-                QgsMessageLog.logMessage('Layers saved ' + msg, tag='Import .3d', level=QgsMessageLog.INFO)
-                self.iface.messageBar().pushMessage('Layers Saved', msg, level=QgsMessageBar.INFO, duration=3)
+                    [ out_layer.CreateField(ogr.FieldDefn(name, ogr_type_of_[name])) for name in names ]
+
+                    out_schema = out_layer.GetLayerDefn() # for creating features in the OGR layer
+
+                    for feat in layer.getFeatures():
+
+                        out_feat = ogr.Feature(out_schema)
+
+                        wkt = feat.geometry().exportToWkt().replace(*self.wkt_replace[out_type])
+                        out_geom = ogr.CreateGeometryFromWkt(wkt)
+                        out_feat.SetGeometry(out_geom)
+
+                        # It's possible the next bit could be done
+                        # more efficiently by iterating numerically
+                        # over the attributes but I'm not sure the OGR
+                        # features would be visited in the right order, so
+                        # use the field names as indices.
+
+                        attrs = feat.attributes()
+
+                        for name, attr in zip(names, attrs):
+                            if ogr_type_of_[name] == ogr.OFTString: # fix for strings
+                                out_feat.SetField(name, str(attr))
+                            elif ogr_type_of_[name] == ogr.OFTDate: # translate dates
+                                out_feat.SetField(name, str(attr.toString(Qt.ISODate)))
+                            else: # everything else just passes through
+                                out_feat.SetField(name, attr)
+
+                        out_layer.CreateFeature(out_feat)
+
+                out_dataset = None # all done, flush to disk
+
+                QgsMessageLog.logMessage('Saved ' + gpkg_file, tag='Import .3d', level=QgsMessageLog.INFO)
+                self.iface.messageBar().pushMessage('Saved', gpkg_file, level=QgsMessageBar.INFO, duration=3)
 
             # End of save to GeoPackage
 
