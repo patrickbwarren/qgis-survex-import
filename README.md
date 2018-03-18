@@ -160,8 +160,7 @@ reality may be pure coincidence: if in doubt, use splays!
 
 Once the data is in QGIS one can do various things with it.
 
-For example, regardless of the above comments about saving with
-_z_ dimension data, features (stations, legs, polygons) can be coloured
+For example, features (stations, legs, polygons) can be coloured
 by elevation to mimic the behaviour of the `aven` viewer in survex
 (hat tip Julian Todd for figuring some of this out).  The easiest way
 to do this is to use the `.qml` style files provided in this
