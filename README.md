@@ -1,11 +1,11 @@
 # QGIS plugin to import survex .3d files 
 
-_Requires QGIS &ge; 2.14 for QgsPointV2, and a .3d file processed
-typically by survex &ge; 1.2.14._
+_Requires QGIS &ge; 2.14 for QgsPointV2, and 
+.3d files produced by survex &ge; 1.2.14 for v8 binary format._
 
 ### Features
 
-* no dependencies, natively reads binary .3d files ;
+* no dependencies, natively reads binary (v8 format) survex .3d files ;
 * import stations and legs with full metadata ;
 * features carry _z_ dimension (elevation) data ;
 * create passage walls, cross-sections, and polygons from LRUD data ;
@@ -34,10 +34,10 @@ window for the user to select a .3d file with a number of options:
 
 * Import legs, with options to include splay, duplicate, and surface legs ;
 * Import stations, with the option to include surface stations (\*) ;
-* Import passage data, with the option to use clino weights and include up / down (see below):
-    - as polygons, computed from L+R in LRUD data ;
-    - as walls, _ditto_ ;
-    - as cross sections, _ditto_ ;
+* Import passage data computed from LRUDs, with the option to use clino weights (see below):
+    - as polygons, with an option to include mean up / down data ;
+    - as walls ;
+    - as cross sections ;
     - as traverses, showing the centrelines used for above ;
 * Get CRS from .3d file, or inherit from QGIS project ;
 * Keep features from previous import(s) ;
@@ -87,7 +87,7 @@ CYLPOLAR, or NOSURVEY.
 The DATE fields are either the same, or represent a date
 range, in the standard QGIS format YYYY-MM-DD.
 
-If up / down data for passage walls is included, then the polygons have
+If up / down data for passage polygons is requested, then the polygons have
 MEAN_UP and MEAN_DOWN attributes in addition to ELEVATION.  These are
 computed from the LRUD data for the two stations at either end of the
 leg.  They can be used in 3d work (see end).
