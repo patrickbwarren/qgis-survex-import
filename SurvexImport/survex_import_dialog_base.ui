@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Survex Import</string>
   </property>
-  <widget class="QDialogButtonBox" name="button_box">
+  <widget class="QDialogButtonBox" name="OK">
    <property name="geometry">
     <rect>
      <x>60</x>
@@ -65,7 +65,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkLegs">
+  <widget class="QCheckBox" name="Legs">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -78,7 +78,7 @@
     <string>Import legs</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkStations">
+  <widget class="QCheckBox" name="Stations">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -109,7 +109,7 @@
     <string>QGIS survex .3d import</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkLegsSurface">
+  <widget class="QCheckBox" name="LegsSurface">
    <property name="geometry">
     <rect>
      <x>320</x>
@@ -122,7 +122,7 @@
     <string>surface</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkLegsSplay">
+  <widget class="QCheckBox" name="LegsSplay">
    <property name="geometry">
     <rect>
      <x>150</x>
@@ -135,7 +135,7 @@
     <string>splay</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkLegsDuplicate">
+  <widget class="QCheckBox" name="LegsDuplicate">
    <property name="geometry">
     <rect>
      <x>220</x>
@@ -148,7 +148,7 @@
     <string>duplicate</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkStationsSurface">
+  <widget class="QCheckBox" name="StationsSurface">
    <property name="geometry">
     <rect>
      <x>320</x>
@@ -161,20 +161,20 @@
     <string>surface</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkGetCRS">
+  <widget class="QCheckBox" name="CRSFromFile">
    <property name="geometry">
     <rect>
      <x>20</x>
      <y>270</y>
-     <width>261</width>
+     <width>131</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
-    <string>Get CRS from file, if possible</string>
+    <string>CRS from .3d file</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkWalls">
+  <widget class="QCheckBox" name="Walls">
    <property name="geometry">
     <rect>
      <x>120</x>
@@ -187,7 +187,7 @@
     <string>Walls</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkClinoWeights">
+  <widget class="QCheckBox" name="UseClinoWeights">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -220,7 +220,7 @@
     <string>Import passage data</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkXSections">
+  <widget class="QCheckBox" name="XSections">
    <property name="geometry">
     <rect>
      <x>200</x>
@@ -233,7 +233,7 @@
     <string>XSections</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkTraverses">
+  <widget class="QCheckBox" name="Traverses">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -246,7 +246,7 @@
     <string>Traverses</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkPolygons">
+  <widget class="QCheckBox" name="Polygons">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -259,7 +259,7 @@
     <string>Polygons</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkKeepFeatures">
+  <widget class="QCheckBox" name="KeepFeatures">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -311,7 +311,7 @@
     <string>...</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkIncludeUD">
+  <widget class="QCheckBox" name="IncludeUpDown">
    <property name="geometry">
     <rect>
      <x>200</x>
@@ -324,11 +324,24 @@
     <string>Include up / down</string>
    </property>
   </widget>
+  <widget class="QCheckBox" name="CRSFromProject">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>270</y>
+     <width>181</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>CRS from QGIS project</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>
   <connection>
-   <sender>button_box</sender>
+   <sender>OK</sender>
    <signal>accepted()</signal>
    <receiver>SurvexImportDialogBase</receiver>
    <slot>accept()</slot>
@@ -344,7 +357,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>button_box</sender>
+   <sender>OK</sender>
    <signal>rejected()</signal>
    <receiver>SurvexImportDialogBase</receiver>
    <slot>reject()</slot>

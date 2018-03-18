@@ -39,7 +39,7 @@ window for the user to select a .3d file with a number of options:
     - as walls, _ditto_ ;
     - as cross sections, _ditto_ ;
     - as traverses, showing the centrelines used for above ;
-* Get CRS from .3d file if possible ;
+* Get CRS from .3d file, or inherit from QGIS project ;
 * Keep features from previous import(s) ;
 * Select a GeoPackage (.gpkg) file to save results (optional).
   
@@ -94,10 +94,14 @@ leg.  They can be used in 3d work (see end).
 
 For the most part importing the CRS from the .3d file should work as
 expected if the survey data has been georeferenced using the survex
-`*cs` and `*cs out` commands.  If it doesn't, one can always uncheck
-this option and set the CRS by hand.  To maximise the likelihood that
-CRS import works as expected, use an EPSG code in the `*cs out` survex
-command rather than a PROJ.4 string.
+`*cs` and `*cs out` commands.  If it doesn't work, or this information
+isn't present, one can instead inherit the CRS from the current QGIS
+project.  If neither of these options is selected, a CRS dialog box
+may appear for each layer, or a default CRS will be chosen
+automatically, depending on the system-wide QGIS settings.
+To maximise the likelihood that CRS import from .3d file works as
+expected, use an EPSG code in the `*cs out` survex command rather than
+a PROJ.4 string.
 
 There is one point to bear in mind regarding the _z_ dimension data.
 Because of the (current) limitations in QGIS for creating vector

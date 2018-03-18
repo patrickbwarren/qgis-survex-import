@@ -23,26 +23,23 @@ Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt4.QtCore import QVariant, QDate, QFileInfo, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog
 from qgis.gui import QgsMessageBar
 from qgis.core import *
-from PyQt4.QtCore import QVariant, QDate, Qt
-from qgis.core import QgsVectorFileWriter
-# Initialize Qt resources from file resources.py
-import resources
-# Import the code for the dialog
-from survex_import_dialog import SurvexImportDialog
 
-import os
-from tempfile import NamedTemporaryFile
+import resources # Initialize Qt resources from file resources.py
 
-from osgeo import osr
-from osgeo import ogr
+from survex_import_dialog import SurvexImportDialog # Import the code for the dialog
 
-from struct import unpack
-from re import search
-from math import sqrt # needed for LRUD wall calculations
+from osgeo import osr # spatial reference system API
+from osgeo import ogr # GDAL vector layer API
+from struct import unpack # aid to parse binary .3d file
+from re import search # for matching and extracting substrings
+from math import sqrt # used in LRUD wall calculations
+
+import os # used for file system operations
 
 class SurvexImport:
     """QGIS Plugin Implementation."""
@@ -117,9 +114,7 @@ class SurvexImport:
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
-
-        # Declare instance attributes
-        self.actions = []
+        self.actions = [] # Declare instance attributes
         self.menu = self.tr(u'&Import .3d file')
         # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar(u'SurvexImport')
@@ -132,6 +127,12 @@ class SurvexImport:
         
         self.dlg.selectedGPKG.clear()
         self.dlg.GPKGSelector.clicked.connect(self.select_gpkg)
+
+        self.dlg.CRSFromProject.setChecked(False)
+        self.dlg.CRSFromFile.clicked.connect(self.crs_from_file)
+
+        self.dlg.CRSFromFile.setChecked(False)
+        self.dlg.CRSFromProject.clicked.connect(self.crs_from_project)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -174,7 +175,6 @@ class SurvexImport:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
         icon_path = ':/plugins/SurvexImport/icon.png'
         self.add_action(
             icon_path,
@@ -193,14 +193,24 @@ class SurvexImport:
         # remove the toolbar
         del self.toolbar
 
+    def crs_from_file(self):
+        """Enforce consistent CRS selector state"""
+        if self.dlg.CRSFromFile.isChecked():
+            self.dlg.CRSFromProject.setChecked(False)
+
+    def crs_from_project(self):
+        """Enforce consistent CRS selector state"""
+        if self.dlg.CRSFromProject.isChecked():
+            self.dlg.CRSFromFile.setChecked(False)
+
     def select_3d_file(self):
-        """Action to select 3d file"""
+        """Select 3d file"""
         file_3d = QFileDialog.getOpenFileName(self.dlg, "Select .3d file ", self.path_3d, '*.3d')
         self.dlg.selectedFile.setText(file_3d)
         self.path_3d = QFileInfo(file_3d).path() # memorise path selection
 
     def select_gpkg(self):
-        """Action to select GeoPackage (.gpkg)"""
+        """Select GeoPackage (.gpkg)"""
         file_gpkg = QFileDialog.getSaveFileName(self.dlg, "Enter or select existing .gpkg file ",
                                                 self.path_gpkg, '*.gpkg')
         self.dlg.selectedGPKG.setText(file_gpkg)
@@ -209,26 +219,26 @@ class SurvexImport:
     # << perfection is achieved not when nothing more can be added 
     #      but when nothing more can be taken away >>
 
-    # First try to match an explicit EPSG number, and check this is recognised.
-    # If this fails, try to match the entire PROJ.4 string.  The reason for 
-    # this somewhat convoluted route is to ensure if there is an EPSG number
-    # in the passed argument, it is returned 'as is' and not transmuted
-    # into another EPSG number with ostensibly the same CRS.
+    # First try to extract an explicit EPSG number, otherwise try
+    # assuming the string is PROJ.4.  The reason for this somewhat
+    # convoluted route is to ensure if there is an EPSG number in the
+    # passed string, it is returned 'as is' and not transmuted into
+    # another EPSG number with ostensibly the same CRS.
 
-    def extract_epsg(self, proj4string):
-        """Extract EPSG number from PROJ.4 string using GDAL tools"""
+    def extract_epsg(self, s):
+        """Extract EPSG number from string"""
         srs = osr.SpatialReference()
-        match = search('epsg:([0-9]*)', proj4string)
+        match = search('epsg:([0-9]*)', s)
         if match:
             return_code = srs.ImportFromEPSG(int(match.group(1)))
         else:
-            return_code = srs.ImportFromProj4(proj4string)
+            return_code = srs.ImportFromProj4(s)
         if return_code:
-            raise Exception("Invalid proj4 string: " + proj4string)
+            raise Exception("Invalid proj4 string: " + s)
         code = srs.GetAttrValue('AUTHORITY', 1)
         srs = None
         self.epsg = int(code)
-        msg = "PROJ.4 %s --> EPSG:%i" % (proj4string, self.epsg)
+        msg = "%s --> EPSG:%i" % (s, self.epsg)
         QgsMessageLog.logMessage(msg, tag='Import .3d', level=QgsMessageLog.INFO)
 
     # Note that 'PointZ', 'LineStringZ', 'PolygonZ' are not possible
@@ -271,34 +281,34 @@ class SurvexImport:
 
     def run(self):
         """Run method that performs all the real work"""
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result: # This is where all the work is done.
+        self.dlg.show() # show the dialog
+        result = self.dlg.exec_() # Run the dialog event loop
+
+        if result: # OK was pressed, this is what happens next!
 
             survex3dfile = self.dlg.selectedFile.text()
             gpkg_file = self.dlg.selectedGPKG.text()
 
-            include_legs = self.dlg.checkLegs.isChecked()
-            include_stations = self.dlg.checkStations.isChecked()
-            include_polygons = self.dlg.checkPolygons.isChecked()
-            include_walls = self.dlg.checkWalls.isChecked()
-            include_xsections = self.dlg.checkXSections.isChecked()
-            include_traverses = self.dlg.checkTraverses.isChecked()
+            include_legs = self.dlg.Legs.isChecked()
+            include_stations = self.dlg.Stations.isChecked()
+            include_polygons = self.dlg.Polygons.isChecked()
+            include_walls = self.dlg.Walls.isChecked()
+            include_xsections = self.dlg.XSections.isChecked()
+            include_traverses = self.dlg.Traverses.isChecked()
 
-            exclude_surface_legs = not self.dlg.checkLegsSurface.isChecked()
-            exclude_splay_legs = not self.dlg.checkLegsSplay.isChecked()
-            exclude_duplicate_legs = not self.dlg.checkLegsDuplicate.isChecked()
-            exclude_surface_stations = not self.dlg.checkStationsSurface.isChecked()
+            exclude_surface_legs = not self.dlg.LegsSurface.isChecked()
+            exclude_splay_legs = not self.dlg.LegsSplay.isChecked()
+            exclude_duplicate_legs = not self.dlg.LegsDuplicate.isChecked()
 
-            use_clino_wgt = self.dlg.checkClinoWeights.isChecked()
-            include_up_down = self.dlg.checkIncludeUD.isChecked()
+            exclude_surface_stations = not self.dlg.StationsSurface.isChecked()
 
-            discard_features = not self.dlg.checkKeepFeatures.isChecked()
+            use_clino_wgt = self.dlg.UseClinoWeights.isChecked()
+            include_up_down = self.dlg.IncludeUpDown.isChecked()
+
+            discard_features = not self.dlg.KeepFeatures.isChecked()
             
-            get_crs = self.dlg.checkGetCRS.isChecked()
+            get_crs_from_file = self.dlg.CRSFromFile.isChecked()
+            get_crs_from_project = self.dlg.CRSFromProject.isChecked()
 
             if not os.path.exists(survex3dfile):
                 raise Exception("File '%s' doesn't exist" % survex3dfile)
@@ -337,25 +347,27 @@ class SurvexImport:
                 else:
                     self.title = fields[0];
 
-                # Try to work out EPSG number from CS if available and requested
+                # Try to work out EPSG number from second field if available.
+                # The project_crs should end up as a lowercase string like 'epsg:7405'
 
-                if get_crs and len(fields) > 1:
+                if get_crs_from_project:
+                    project_crs = self.iface.mapCanvas().mapRenderer().destinationCrs()
+                    self.extract_epsg(project_crs.authid().lower())
+                elif get_crs_from_file and len(fields) > 1:
                     self.extract_epsg(fields[1])
                 else:
                     self.epsg = None
 
-                line = fp.readline().rstrip() # Timestamp
-                
+                line = fp.readline().rstrip() # Timestamp, unused in present application
+
                 if not line.startswith(b'@'):
                     raise IOError('Unrecognised timestamp in ' + survex3dfile)
-                
-                timestamp = int(line[1:]) # Saved, but not used at present
 
-                # System-wide flags - abort if extended elevation
+                # timestamp = int(line[1:])
 
                 flag = ord(fp.read(1)) # file-wide flag
 
-                if flag & 0x80: # bail out if extended elevation
+                if flag & 0x80: # abort if extended elevation
                     raise IOError("Can't deal with extended elevation in " + survex3dfile)
 
                 # All front-end data read in, now read byte-wise
@@ -561,7 +573,7 @@ class SurvexImport:
                 
                 for xsect in self.xsect_list:
 
-                    if len(xsect) < 2: # if there's only one station we don't know which way we're facing
+                    if len(xsect) < 2: # bail out if there's only one station in the xsect
                         continue
 
                     centerline = [] # will contain the station position and LRUD data
@@ -730,6 +742,8 @@ class SurvexImport:
             # translating the corresponding QGIS objects on the fly.
 
             if gpkg_file:
+
+                self.iface.messageBar().pushMessage('Saving', gpkg_file, level=QgsMessageBar.INFO, duration=3)
 
                 gpkg_driver = ogr.GetDriverByName('GPKG')
 
