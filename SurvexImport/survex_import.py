@@ -692,7 +692,7 @@ class SurvexImport:
 
                 # End of processing xsect_list - now add features to requested layers
 
-                attrs = [QgsField('ELEVATION', QVariant.Double)] # common to first two
+                attrs = [QgsField('ELEVATION', QVariant.Double)] # common to all
 
                 if include_traverses and trav_features: # traverse layer
                     travs_layer = self.add_layer('traverses', 'LineString')
@@ -715,8 +715,8 @@ class SurvexImport:
                     walls_layer.dataProvider().addFeatures(wall_features)
                     layers.append(walls_layer)
 
-                if include_up_down: # if requested for polygons
-                    attrs += [QgsField(s, QVariant.Double) for s in ('MEAN_UP', 'MEAN_DOWN') ]
+                if include_up_down: # add fields if requested for polygons
+                    attrs += [QgsField(s, QVariant.Double) for s in ('MEAN_UP', 'MEAN_DOWN')]
 
                 if include_polygons and quad_features: # polygon layer
                     quads_layer = self.add_layer('polygons', 'Polygon')
