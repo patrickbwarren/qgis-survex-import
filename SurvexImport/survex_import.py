@@ -23,6 +23,7 @@ Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
  *                                                                         *
  ***************************************************************************/
 """
+
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtCore import QVariant, QDate, QFileInfo, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog
@@ -96,12 +97,9 @@ class SurvexImport:
 
     def __init__(self, iface):
         """Constructor"""
-        # Save reference to the QGIS interface
-        self.iface = iface
-        # initialize plugin directory
-        self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
+        self.iface = iface # Save reference to the QGIS interface
+        self.plugin_dir = os.path.dirname(__file__) # initialize plugin directory
+        locale = QSettings().value('locale/userLocale')[0:2] # initialize locale
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
@@ -139,7 +137,6 @@ class SurvexImport:
         """Get the translation for a string using Qt translation API."""
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('SurvexImport', message)
-
 
     def add_action(self, icon_path, text, callback,
                    enabled_flag=True, add_to_menu=True,
@@ -216,9 +213,6 @@ class SurvexImport:
         self.dlg.selectedGPKG.setText(file_gpkg)
         self.path_gpkg = QFileInfo(file_gpkg).path() # memorise path selection
 
-    # << perfection is achieved not when nothing more can be added 
-    #      but when nothing more can be taken away >>
-
     # First try to extract an explicit EPSG number, otherwise try
     # assuming the string is PROJ.4.  The reason for this somewhat
     # convoluted route is to ensure if there is an EPSG number in the
@@ -284,7 +278,10 @@ class SurvexImport:
         self.dlg.show() # show the dialog
         result = self.dlg.exec_() # Run the dialog event loop
 
-        if result: # OK was pressed, this is what happens next!
+        if result: # The user pressed OK, and this is what happened next!
+
+            # << perfection is achieved not when nothing more can be added
+            #  but when nothing more can be taken away >> -- de Saint-Exupéry
 
             survex3dfile = self.dlg.selectedFile.text()
             gpkg_file = self.dlg.selectedGPKG.text()
@@ -499,12 +496,12 @@ class SurvexImport:
                 features = []
 
                 for (xyz, label, flag) in self.station_list:
-                    x, y, z = [0.01*v for v in xyz]
+                    xyz = [0.01*v for v in xyz]
                     attrs = [1 if flag & k else 0 for k in self.station_flags]
-                    attrs.insert(0, round(z, 2))
+                    attrs.insert(0, round(xyz[2], 2)) # elevation
                     attrs.insert(0, label)
                     feat = QgsFeature()
-                    geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
+                    geom = QgsGeometry(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
                     feat.setGeometry(geom)
                     feat.setAttributes(attrs)
                     features.append(feat)
@@ -535,8 +532,8 @@ class SurvexImport:
                         elev = 0.5 * sum([0.01*xyz[2] for xyz in xyz_pair])
                         points = []
                         for xyz in xyz_pair:
-                            x, y, z = [0.01*v for v in xyz]
-                            points.append(QgsPointV2(QgsWKBTypes.PointZ, x, y, z))
+                            xyz = [0.01*v for v in xyz]
+                            points.append(QgsPointV2(QgsWKBTypes.PointZ, *xyz))
                         attrs = [1 if flag & k else 0 for k in self.leg_flags]
                         if nlehv:
                             [ attrs.insert(0, 0.01*v) for v in reversed(nlehv[1:5]) ]
@@ -573,8 +570,8 @@ class SurvexImport:
                 
                 for xsect in self.xsect_list:
 
-                    if len(xsect) < 2: # bail out if there's only one station in the xsect
-                        continue
+                    if len(xsect) < 2: # if there's only one station ..
+                        continue # .. give up as we don't know which way to face
 
                     centerline = [] # will contain the station position and LRUD data
 
@@ -786,7 +783,7 @@ class SurvexImport:
                         # more efficiently by iterating numerically
                         # over the attributes but I'm not sure the OGR
                         # features would be visited in the right order, so
-                        # use the field names as indices.
+                        # here use the field names as indices.
 
                         qgis_attrs = qgis_feat.attributes()
 
@@ -807,7 +804,7 @@ class SurvexImport:
 
             # End of save to GeoPackage
 
-        # End of results in run function
+        # End of what happens if user pressed OK
 
     # End of run function definition
 
