@@ -26,7 +26,7 @@ Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtCore import QVariant, QDate, QFileInfo, Qt
-from PyQt4.QtGui import QAction, QIcon, QFileDialog
+from PyQt4.QtGui import QAction, QIcon, QFileDialog, QProgressBar
 from qgis.gui import QgsMessageBar
 from qgis.core import *
 
@@ -38,7 +38,7 @@ from osgeo import osr # spatial reference system API
 from osgeo import ogr # GDAL vector layer API
 from struct import unpack # aid to parse binary .3d file
 from re import search # for matching and extracting substrings
-from math import sqrt # used in LRUD wall calculations
+from math import log10, floor, sqrt
 
 import os # used for file system operations
 
@@ -738,9 +738,28 @@ class SurvexImport:
             # fields, and attributes are created using OGR calls,
             # translating the corresponding QGIS objects on the fly.
 
+            # It's possible part of this could be done more
+            # efficiently by iterating numerically over the attributes
+            # but I'm not sure the OGR features would be visited in
+            # the right order, so here use the field names as indices.
+
             if gpkg_file:
 
-                self.iface.messageBar().pushMessage('Saving', gpkg_file, level=QgsMessageBar.INFO, duration=3)
+                nfeatures = 0
+                for layer in layers:
+                    nfeatures += layer.featureCount()
+
+                if nfeatures > 100: # create a progress bar
+                    progress_bar = QProgressBar()
+                    progress_bar.setMaximum(nfeatures)
+                    progress_bar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                    msg = 'Saving ' + QFileInfo(gpkg_file).fileName()
+                    progressMessageBar = self.iface.messageBar().createMessage(msg)
+                    progressMessageBar.layout().addWidget(progress_bar)
+                    self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
+                    ntrack = int(10**(floor(log10(nfeatures))-1))
+                else:
+                    progress_bar = None
 
                 gpkg_driver = ogr.GetDriverByName('GPKG')
 
@@ -754,6 +773,8 @@ class SurvexImport:
                     ogr_srs.ImportFromEPSG(self.epsg)
                 else:
                     ogr_srs = None
+
+                ncount = 0 # number of features processed
 
                 for layer in layers:
 
@@ -774,16 +795,15 @@ class SurvexImport:
 
                     for qgis_feat in layer.getFeatures():
 
+                        ncount += 1
+
+                        if progress_bar and ncount % ntrack: # update progress bar
+                            progress_bar.setValue(ncount)
+
                         ogr_feat = ogr.Feature(ogr_schema)
 
                         ogr_wkt = qgis_feat.geometry().exportToWkt().replace(*self.wkt_replace[ogr_type])
                         ogr_feat.SetGeometry(ogr.CreateGeometryFromWkt(ogr_wkt))
-
-                        # It's possible the next bit could be done
-                        # more efficiently by iterating numerically
-                        # over the attributes but I'm not sure the OGR
-                        # features would be visited in the right order, so
-                        # here use the field names as indices.
 
                         qgis_attrs = qgis_feat.attributes()
 
@@ -799,8 +819,13 @@ class SurvexImport:
 
                 ogr_dataset = None # all done, flush to disk
 
-                QgsMessageLog.logMessage('Saved ' + gpkg_file, tag='Import .3d', level=QgsMessageLog.INFO)
-                self.iface.messageBar().pushMessage('Saved', gpkg_file, level=QgsMessageBar.INFO, duration=3)
+                if progress_bar: # clean up and free resources
+                    self.iface.messageBar().clearWidgets()
+                    progress_bar = None
+
+                msg = QFileInfo(gpkg_file).fileName() + ' to ' + QFileInfo(gpkg_file).path()
+                QgsMessageLog.logMessage('Saved ' + msg, tag='Import .3d', level=QgsMessageLog.INFO)
+                self.iface.messageBar().pushMessage('Saved', msg, level=QgsMessageBar.INFO, duration=5)
 
             # End of save to GeoPackage
 
