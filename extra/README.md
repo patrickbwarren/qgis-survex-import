@@ -1,5 +1,8 @@
 # Extra python scripts
 
+_"Plan to throw one away; you will, anyhow."_
+&mdash; Fred Brooks, _The Mythical Man-Month_
+
 * `survex_import_v1.py` is the previous version of plugin.
 
 * `survex_import_using_dump3d.py` is a version which slurps the output

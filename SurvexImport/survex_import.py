@@ -36,7 +36,7 @@ from survex_import_dialog import SurvexImportDialog # Import the code for the di
 
 from osgeo import osr # spatial reference system API
 from osgeo import ogr # GDAL vector layer API
-from struct import unpack # aid to parse binary .3d file
+from struct import unpack # from binary, read from .3d file
 from re import search # for matching and extracting substrings
 from math import log10, floor, sqrt
 
@@ -89,8 +89,8 @@ class SurvexImport:
 
     station_xyz = {} # map station names to xyz coordinates
 
-    epsg = None # will be defined in CRS picked up from file
-    title = '' # will be reset from file
+    epsg = None # used to set layer CRS in memory provider
+    title = '' # used to set layer title in memory provider
 
     path_3d = '' # to remember the path to the survex .3d file
     path_gpkg = '' # ditto for path to save GeoPackage (.gpkg)
@@ -239,7 +239,7 @@ class SurvexImport:
     # in QGIS 2.18 However the z-dimension data is respected.
 
     def add_layer(self, subtitle, geom):
-        """Add a memory layer with title and geom 'Point' or 'LineString'"""
+        """Add a memory layer with title and geom, and CRS if epsg defined"""
         uri = '%s?crs=epsg:%i' % (geom, self.epsg) if self.epsg else geom
         name = '%s - %s' % (self.title, subtitle) if self.title else subtitle
         layer =  QgsVectorLayer(uri, name, 'memory')
@@ -280,9 +280,6 @@ class SurvexImport:
 
         if result: # The user pressed OK, and this is what happened next!
 
-            # << perfection is achieved not when nothing more can be added
-            #  but when nothing more can be taken away >> -- de Saint-Exupéry
-
             survex3dfile = self.dlg.selectedFile.text()
             gpkg_file = self.dlg.selectedGPKG.text()
 
@@ -316,7 +313,7 @@ class SurvexImport:
                 self.station_xyz = {}
                 self.xsect_list = []
 
-            # Read .3d file as binary, parse and save data structures
+            # Read .3d file as binary, parse, and save data structures
             
             with open(survex3dfile, 'rb') as fp:
     
@@ -381,13 +378,13 @@ class SurvexImport:
                 
                 legs = [] # will be used to capture leg data between MOVEs
                 xsect = [] # will be used to capture XSECT data
-                nlehv = None # .. remains None if there isn't any...
+                nlehv = None # .. remains None if there isn't any error data...
 
                 while True: # start of byte-gobbling while loop
 
                     char = fp.read(1)
 
-                    if not char: # End of file reached (prematurely?)
+                    if not char: # End of file (reached prematurely?)
                         raise IOError('Premature end of file in ' + survex3dfile)
 
                     byte = ord(char)
@@ -554,11 +551,7 @@ class SurvexImport:
                 leg_layer.dataProvider().addFeatures(features)
                 layers.append(leg_layer)
 
-            # Now do walls if required
-
-            # The calculations below use integers for xyz and lrud, and
-            # conversion to metres is left to the end.  Then dh2 is an
-            # integer and the test for a plumb is safely dh2 = 0.
+            # Now do wall features if asked
             
             if (include_traverses or include_xsections
                 or include_walls or include_polygons) and self.xsect_list:
@@ -581,6 +574,10 @@ class SurvexImport:
                         centerline.append(xyz + lrud_or_zero) # and collect as 7-uple
 
                     direction = [] # will contain the corresponding direction vectors
+
+                    # The calculations below use integers for xyz and lrud, and
+                    # conversion to metres is left to the end.  Then dh2 is an
+                    # integer and the test for a plumb is safely dh2 = 0.
 
                     # The directions are unit vectors optionally weighted by
                     # cos(inclination) = dh/dl where dh^2 = dx^2 + dy^2 + dz^2
@@ -738,14 +735,15 @@ class SurvexImport:
             # fields, and attributes are created using OGR calls,
             # translating the corresponding QGIS objects on the fly.
 
-            # It's possible part of this could be done more
-            # efficiently by iterating numerically over the attributes
-            # but I'm not sure the OGR features would be visited in
-            # the right order, so here use the field names as indices.
+            # It's possible this could be done faster by iterating
+            # numerically over the attributes but I'm not sure the OGR
+            # features would be visited in the right order, so here
+            # use the field names as indices.  Meanwhile, the user is
+            # appraised of progress by a progress bar.
 
             if gpkg_file:
 
-                nfeatures = 0
+                nfeatures = 0 # how many features in total
                 for layer in layers:
                     nfeatures += layer.featureCount()
 
@@ -757,7 +755,7 @@ class SurvexImport:
                     progressMessageBar = self.iface.messageBar().createMessage(msg)
                     progressMessageBar.layout().addWidget(progress_bar)
                     self.iface.messageBar().pushWidget(progressMessageBar, self.iface.messageBar().INFO)
-                    ntrack = int(10**(floor(log10(nfeatures))-1))
+                    ntrack = int(10**(floor(log10(nfeatures))-1)) # update frequency
                 else:
                     progress_bar = None
 
@@ -774,9 +772,9 @@ class SurvexImport:
                 else:
                     ogr_srs = None
 
-                ncount = 0 # number of features processed
+                ncount = 0 # to keep track of number of features processed
 
-                for layer in layers:
+                for layer in layers: # go through all the layers
 
                     qgis_name = layer.name()
                     match = search(' - ([a-z]*)', qgis_name)
@@ -793,9 +791,9 @@ class SurvexImport:
 
                     ogr_schema = ogr_layer.GetLayerDefn() # for creating features in the OGR layer
 
-                    for qgis_feat in layer.getFeatures():
+                    for qgis_feat in layer.getFeatures(): # go through all the features
 
-                        ncount += 1
+                        ncount += 1 # update feature count
 
                         if progress_bar and ncount % ntrack: # update progress bar
                             progress_bar.setValue(ncount)
