@@ -5,7 +5,7 @@ _Requires QGIS &ge; 2.14 for QgsPointV2, and
 
 ### Features
 
-* no dependencies, natively reads binary (v8 format) survex .3d files ;
+* no dependencies, natively reads binary v8 format survex .3d files ;
 * import stations and legs with full metadata ;
 * features carry _z_ dimension (elevation) data ;
 * create passage walls, cross-sections, and polygons from LRUD data ;
