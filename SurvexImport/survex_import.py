@@ -27,8 +27,11 @@ Copyright (C) 2008-2012 Thomas Holder, http://sf.net/users/speleo3/
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtCore import QVariant, QDate, QFileInfo, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QProgressBar
+from qgis.core import QGis, QgsPointV2, QgsPolygonV2, QgsLineStringV2
+from qgis.core import QgsFeature, QgsField, QgsGeometry, QgsVectorLayer
+from qgis.core import QgsMapLayerRegistry, QgsWKBTypes, QgsVectorFileWriter
+from qgis.core import QgsMessageLog
 from qgis.gui import QgsMessageBar
-from qgis.core import QGis
 
 import resources # Initialize Qt resources from file resources.py
 
