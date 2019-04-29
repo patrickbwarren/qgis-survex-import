@@ -28,7 +28,7 @@ from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from PyQt4.QtCore import QVariant, QDate, QFileInfo, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QProgressBar
 from qgis.gui import QgsMessageBar
-from qgis.core import *
+from qgis.core import QGis
 
 import resources # Initialize Qt resources from file resources.py
 
