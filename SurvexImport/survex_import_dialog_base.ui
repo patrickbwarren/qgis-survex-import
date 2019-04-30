@@ -106,7 +106,7 @@
     </font>
    </property>
    <property name="text">
-    <string>QGIS survex .3d import</string>
+    <string>QGIS survex .3d import (v2.1)</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="LegsSurface">

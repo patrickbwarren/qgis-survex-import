@@ -1,4 +1,4 @@
-# QGIS plugin to import survex .3d files
+# QGIS plugin to import survex .3d files (version 2.1)
 
 This QGIS plugin provides a convenient route to import features (legs and
 stations) from a [survex](https://survex.com/ "survex.com")
@@ -8,7 +8,7 @@ metadata properly included.
 To install the plugin:
 
 * clone or download this repository and copy the `SurvexImport`
-directory into the QGIS python plugins directory, which is usually
+directory into the QGIS2 python plugins directory, which is usually
 `~/.qgis2/python/plugins` (where `~` on Windows is probably
 `C:\Users\<user>`);
 

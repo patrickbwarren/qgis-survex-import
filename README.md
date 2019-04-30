@@ -1,7 +1,7 @@
-# QGIS plugin to import survex .3d files 
+# QGIS plugin to import survex .3d files (version 2.1)
 
-_Requires QGIS &ge; 2.14 for QgsPointV2, and 
-.3d files produced by survex &ge; 1.2.14 for v8 binary format._
+_Requires QGIS &ge; 2.14 for QgsPointV2, and QGIS &le; 2.99._\
+_Requires binary .3d files produced by survex &ge; 1.2.14 for v8 file format._
 
 ### Features
 
@@ -15,7 +15,7 @@ _Requires QGIS &ge; 2.14 for QgsPointV2, and
 ### Installation
 
 * clone or download this repository and copy the `SurvexImport`
-directory into the QGIS python plugins directory, which is usually
+directory into the QGIS2 python plugins directory, which is usually
 `~/.qgis2/python/plugins` (where `~` on Windows is probably
 `C:\Users\<user>`);
 
@@ -104,7 +104,7 @@ expected, use an EPSG code in the `*cs out` survex command rather than
 a PROJ.4 string.
 
 There is one point to bear in mind regarding the _z_ dimension data.
-Because of the (current) limitations in QGIS for creating vector
+Because of the (current) limitations in QGIS2 for creating vector
 layers in memory, the layer type does not explicitly know that the
 features include _z_ dimensions.  To ensure the _z_ dimension data is
 correctly incorporated when saving layers by hand, in the 'Save as
@@ -259,10 +259,9 @@ along with this program.  If not, see
 
 ### Copyright
 
-The .3d file parser is based on a GPL v2 library to handle Survex 3D files (`*.3d`),
+The .3d file parser is based on a GPL v2 library to handle
+Survex 3D files (`*.3d`),
 copyright &copy; 2008-2012 Thomas Holder, http://sf.net/users/speleo3/; 
 see https://github.com/speleo3/inkscape-speleo.
 
-Modifications and extensions copyright &copy; (2017, 2018) Patrick B Warren.
-
-
+Modifications and extensions copyright &copy; (2017-2019) Patrick B Warren.
