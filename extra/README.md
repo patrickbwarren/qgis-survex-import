@@ -23,3 +23,6 @@ _"Plan to throw one away; you will, anyhow."_
   data.  It runs like `dump3d.py`, but additionally generates a number of
   `*.dat` files containing xy data which can be read into a standard
   plotting package.
+
+* `old3d2json.py` converts old-style ASCII .3d files at v0.01 to
+  GeoJSON, writing to stdout, and optionally adding a CRS.

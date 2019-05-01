@@ -8,7 +8,7 @@
 
 [general]
 name=Import .3d file
-qgisMinimumVersion=2.0
+qgisMinimumVersion=2.14
 qgisMaximumVersion=2.99
 description=Import features from survex .3d files
 version=2.1
