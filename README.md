@@ -3,6 +3,8 @@
 _Requires QGIS &ge; 2.14 for QgsPointV2, and QGIS &le; 2.99._\
 _Requires binary .3d files produced by survex &ge; 1.2.14 for v8 file format._
 
+#### For QGIS3 visit https://github.com/patrickbwarren/qgis3-survex-import
+
 ### Features
 
 * no dependencies, natively reads binary v8 format survex .3d files ;
