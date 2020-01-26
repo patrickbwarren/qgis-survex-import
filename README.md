@@ -1,8 +1,9 @@
 # QGIS plugin to import survex .3d files (version 2.1)
 
-_Requires QGIS &ge; 2.14 for QgsPointV2, and QGIS &le; 2.99._\
+_Requires QGIS &ge; 2.14 for QgsPointV2, and QGIS &le; 2.99._  
 _Requires binary .3d files produced by survex &ge; 1.2.14 for v8 file format._
 
+#### _This plugin is no longer being updated; use instead QGIS3._  
 #### For QGIS3 visit https://github.com/patrickbwarren/qgis3-survex-import
 
 ### Features
