@@ -3,8 +3,12 @@
 _Requires QGIS &ge; 2.14 for QgsPointV2, and QGIS &le; 2.99._  
 _Requires binary .3d files produced by survex &ge; 1.2.14 for v8 file format._
 
-#### _This plugin works but is no longer being updated._
-#### For QGIS3 visit https://github.com/patrickbwarren/qgis3-survex-import
+#### _This QGIS plugin is no longer maintained: please switch to QGIS3 !_
+
+The QGIS3 version can be found at
+<https://github.com/patrickbwarren/qgis3-survex-import> where there is
+also additional background documentation on cave surveying, spatial
+reference systems / co-ordinate reference systems, and GIS platforms.
 
 ### Features
 
@@ -159,89 +163,6 @@ _TL;DR: if in doubt try first with the 'use clino weights' option selected._
 Note that passage wall data is _inferred_ and any resemblence to 
 reality may be pure coincidence: if in doubt, use splays!
 
-### What to do next
-
-Once the data is in QGIS one can do various things with it.
-
-For example, features (stations, legs, polygons) can be coloured
-by elevation to mimic the behaviour of the `aven` viewer in survex
-(hat tip Julian Todd for figuring some of this out).  The easiest way
-to do this is to use the `.qml` style files provided in this
-repository.  For example to colour legs by depth, open the properties
-dialog and under the 'Style' tab, at the bottom select 'Style &rarr;
-Load Style', then choose one of the `colour_lines_by_elevation*.qml`
-style files.  This will apply a colour scheme to the ELEVATION field
-data with an inverted spectral colour ramp.  Use `lines` for legs,
-walls, cross sections and traverses; `points` for stations; and
-`polygons` for polygons.
-
-Two versions of these style files are provided.
-
-The first version uses a graduated, inverted spectral colour ramp to
-colour ranges of ELEVATION.  A small limitation is that these ranges
-are not automatically updated to match the vertical range of the
-current data set, but these can be refreshed by clicking on 'Classify'
-(then 'Apply' to see the changes).
-
-The second version uses a simple marker (line, or fill) with the
-colour set by an expression that maps the ELEVATION to a spectral
-colour ramp.  There are no ranges here, but rather these styles rely
-on _zmin_ and _zmax_ variables being set (see 'Variables' tab under
-layer &rarr; Properties).  By matching _zmin_ and _zmax_ between layers
-with these styles, one can be assured that a common colouring scheme
-is being applied.  A handy way to choose values for _zmin_ and _zmax_ is
-to open the statistics panel (View &rarr; Panels &rarr; Statistics
-Panel) to check out the min and max values in the ELEVATION field.
-
-Colour legs by date is possible using an expression like
-`day(age("DATE1",'1970-01-01'))` (which gives the number of days
-between the recorded DATE1 and the given date).  Colour legs by error
-is also possible.
-
-Another thing one can do is enable 'map tips', for example to use the
-NAME field.  Then, hovering the mouse near a station (or leg) will
-show the name as a pop-up label.  For this to work:
-
-* 'View &rarr; Map Tips' should be checked in the main menu;
-* the map tip has to be set up to use the NAME field
-  ('Properties &rarr; Display') in the relevant layer;
-* the layer has to be the currently _selected_ one, though
-  it does not have to be displayed.
-
-With a _digital elevation model_ (DEM raster layer) even more
-interesting things can be done.  For example one can use the 'Raster
-Interpolation' plugin to find the surface elevation at all the
-imported stations (to do this, first create a SURFACE_ELEV field to hold the
-numerical result, then run the plugin).  Then, one can use the
-built-in field calculator to make a DEPTH field containing the depth
-below surface, as SURFACE_ELEV minus ELEVATION.
-Stations can be coloured by this, or the information can be added to
-the 'map tip', etc.
-
-Three dimensional views can be made with the Qgis2threejs plugin,
-usually in combination with a DEM.  To render features in 3d _either_
-use the ELEVATION attribute to set the absolute height, _or_ (better)
-save the imported data to a shapefile (eg as a GeoPackage) and
-re-import so that QGIS knows about the _z_ dimension data and
-can pass it on to the plugin to inform the rendering.
-
-Passage 'tubes' in aven can be approximately rendered using polygons,
-with the base set to floor level and the extruded height set to roof
-level.  To do this import the MEAN_UP and MEAN_DOWN fields mentioned
-above and use the field calculator to make two new floating point
-(double) fields: FLOOR equal to ELEVATION minus MEAN_DOWN, and HEIGHT
-equal to MEAN_DOWN plus MEAN_UP.  Then render the polygons with the
-_z_ co-ordinate as the absolute FLOOR, and extruded height as HEIGHT.
-
-Sample georeferenced survey data can be found in
-[`DowProv.3d`](DowProv/DowProv.3d).
-
-The corresponding GeoPackage file is
-[`DowProv.gpkg`](DowProv/DowProv.gpkg).
-
-Further notes on cave surveying and GIS are in 
-[`cave_surveying_and_GIS.pdf`](cave_surveying_and_GIS.pdf).
-
 ### Copying
 
 Code in this repository is licensed under GLP v2:
@@ -264,7 +185,7 @@ along with this program.  If not, see
 
 The .3d file parser is based on a GPL v2 library to handle
 Survex 3D files (`*.3d`),
-copyright &copy; 2008-2012 Thomas Holder, http://sf.net/users/speleo3/; 
-see https://github.com/speleo3/inkscape-speleo.
+copyright &copy; 2008-2012 Thomas Holder, <http://sf.net/users/speleo3/>; 
+see <https://github.com/speleo3/inkscape-speleo>.
 
-Modifications and extensions copyright &copy; (2017-2019) Patrick B Warren.
+Modifications and extensions copyright &copy; (2017-2021) Patrick B Warren.

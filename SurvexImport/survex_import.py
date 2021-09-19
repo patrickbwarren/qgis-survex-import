@@ -345,7 +345,7 @@ class SurvexImport:
                     self.title = fields[0];
 
                 # Try to work out EPSG number from second field if available.
-                # The project_crs should end up as a lowercase string like 'epsg:7405'
+                # The project_crs should end up as a lowercase string like 'epsg:27700'
 
                 if get_crs_from_project:
                     project_crs = self.iface.mapCanvas().mapRenderer().destinationCrs()
