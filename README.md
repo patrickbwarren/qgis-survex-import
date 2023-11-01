@@ -1,7 +1,7 @@
 # QGIS2 plugin to import survex .3d files
 
 _Requires QGIS &ge; 2.14 for QgsPointV2, and QGIS &le; 2.99._  
-_Requires binary .3d files produced by survex &ge; 1.2.14 for v8 file format._
+_Requires binary `.3d` files produced by survex &ge; 1.2.14 for v8 file format._
 
 #### _This QGIS2 plugin is no longer maintained; please switch to the [QGIS3 version](https://github.com/patrickbwarren/qgis3-survex-import) !_
 
@@ -25,7 +25,7 @@ along with this program.  If not, see
 
 ### Copyright
 
-The .3d file parser is based on a GPL v2 library to handle
+The `.3d` file parser is based on a GPL v2 library to handle
 Survex 3D files (`*.3d`),
 copyright &copy; 2008-2012 Thomas Holder, <http://sf.net/users/speleo3/>; 
 see <https://github.com/speleo3/inkscape-speleo>.
